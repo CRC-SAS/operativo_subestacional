@@ -1,4 +1,5 @@
 import os
+import glob
 import requests
 import shutil
 import validators
@@ -37,6 +38,7 @@ def gen_url_download(fecha, variable='tas', tipo='forecast', conj='ECCC', modelo
               'data.nc'
     return url_out
 
+
 def descarga_pronostico(fecha, variable, tipo, conj, modelo, outfolder):
     url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
     out_file = outfolder + variable + '_' + modelo + '_' + fecha.strftime('%Y%m%d%H%M') + '_forecast.nc'
@@ -46,7 +48,7 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, outfolder):
         print('Descargando archivo y guardando en:', out_file)
         valid=validators.url(url_out)
         if valid==True:
-            print(fecha)
+            print('Descargando archivo', modelo, 'para la fecha:',fecha)
             with requests.get(url_out, stream=True) as r:
                 with open(out_file, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
@@ -54,6 +56,30 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, outfolder):
             print("Invalid url")
     
     return out_file
+
+def descarga_pronostico_CFSv2(fecha, variable, outfolder):
+    tipo = 'forecast'
+    conj = 'NCEP'
+    modelo = 'CFSv2'
+    fechas_file = [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]
+    for fechai in fechas_file:
+        url_out = gen_url_download(fechai, variable, tipo, conj, modelo)
+        out_file = outfolder + variable + '_' + modelo + '_' + fechai.strftime('%Y%m%d%H%M') + '_forecast.nc'
+        if os.path.isfile(out_file):
+            continue
+        else:
+            valid=validators.url(url_out)
+            if valid==True:
+                print('Descargando archivo CFSv2 para la fecha:', fechai)
+                with requests.get(url_out, stream=True) as r:
+                    with open(out_file, 'wb') as f:
+                        shutil.copyfileobj(r.raw, f)
+            else:
+                print("Invalid url")
+    out_files = sorted(glob.glob(outfolder + '*' + modelo + '*.nc'), reverse=True)
+    
+    return out_files
+
 
 def grouping_coord(ds):
     if 'L' in list(ds.dims):
@@ -77,10 +103,7 @@ def grouping_coord_fecha(ds, miercoles, hcast=0):
     # Se utiliza para ajustar con modelos que no sean
     # GEFS (L=34) ni GEPS8 (L=39) /GEPS7 (L=32)
     # GEOS_V2p1 (L=45)
-    #
-    print('hcast=', hcast)     
     if 'L' in list(ds.dims):
-        
         N = ds.sizes['L']  # Largo de pronóstico
         semanas = np.zeros(N)
         # Fechas correspondiente a inicio semana 1, 2 y 3/4 y 5
@@ -108,6 +131,17 @@ def grouping_coord_fecha(ds, miercoles, hcast=0):
             sem2_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=8) + dt.timedelta(hours=12))
             sem3_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=15) + dt.timedelta(hours=12))
             sem4_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=29) + dt.timedelta(hours=12))
+        elif hcast == 2:
+            f_model = (ds.S+ds.L).values
+            if pd.Timestamp(f_model[0]) <= miercoles:
+                # El modelo tiene datos antes del miercoles guia.
+                # Usamos la primera semana desde el jueves para alinear con GEFS esa semana.
+                sem1_i = pd.Timestamp(miercoles + dt.timedelta(days=1) + dt.timedelta(hours=12))
+            else:
+                sem1_i = pd.Timestamp(f_model[0])
+            sem2_i = pd.Timestamp(miercoles + dt.timedelta(days=8) + dt.timedelta(hours=12))
+            sem3_i = pd.Timestamp(miercoles + dt.timedelta(days=15) + dt.timedelta(hours=12))
+            sem4_i = pd.Timestamp(miercoles + dt.timedelta(days=29) + dt.timedelta(hours=12))
         #
         fechas_m = np.array([pd.Timestamp(a)==sem1_i for a in f_model])
         i1 = fechas_m.argmax()
@@ -201,26 +235,28 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
         #c_pp = ['dimgray', '#ffffff', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d', 'deeppink']
         #c_pp = ['#ffffff', '#bdc9e1', '#74a9cf', '#2b8cbe', '#045a8d']
-        c_pp = ['#ffffff','#edf8b1','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#253494','#081d58']
+        c_pp = ['#ffffff', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58']
     elif ((percentil == '80') or (percentil == '50+')) & (variable=='tas'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por encima del percentil ' + percentil[0:2]
         #c_pp = ['#ffffff', '#fdae6b', '#fd8d3c', '#e6550d', '#a63603']
-        c_pp = ['#ffffff', '#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
+        c_pp = ['#ffffff', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026']
     elif ((percentil == '20') or (percentil == '50-')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por debajo del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#fdae6b', '#fd8d3c', '#e6550d', '#a63603']
+        #c_pp = ['#ffffff', '#fdae6b', '#fd8d3c', '#e6550d', '#a63603']
+        c_pp = ['#ffffff', '#fff7bc', '#fee391', '#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404', '#662506']
     elif ((percentil == '80') or (percentil == '50+')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por encima del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#d0d1e6', '#67a9cf', '#02818a', '#014636']
+        #c_pp = ['#ffffff', '#d0d1e6', '#67a9cf', '#02818a', '#014636']
+        c_pp = ['#ffffff', '#ece2f0', '#d0d1e6', '#a6bddb', '#67a9cf', '#3690c0', '#02818a', '#016c59', '#014636']
 
 
     cMap = c.ListedColormap(c_pp)
@@ -231,7 +267,7 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
     norm = c.BoundaryNorm(boundaries=bounds, ncolors=len(c_pp))#, extend='both')
     # Datos para el mapa
     datap = prob.sel(semanas=week).to_numpy()
-    print(np.min(datap), np.mean(datap), np.max(datap))
+    #print(np.min(datap), np.mean(datap), np.max(datap))
     x = prob.X.to_numpy()
     y = prob.Y.to_numpy()
     data = datap.copy()
