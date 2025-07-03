@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from funciones_extra import descarga_pronostico, mapa_probabilidad
 from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_extr
+from funciones_extra import parse_config, str_to_bool
+
 
 def nearest(items, pivot):
     return min([i for i in items if i <= pivot], key=lambda x: abs(x - pivot))
@@ -15,18 +17,29 @@ def nearest(items, pivot):
 fecha = sys.argv[1]
 variable = sys.argv[2]
 #percentil = sys.argv[3]
-carpeta_dato = '../datos/operativo/'
-carpeta_figuras = '../figuras/operativo/' + variable + '/'
+# Archivo con carpetas
+config_file = 'datos_entrada.txt'
+# Leemos el archivo
+config = parse_config(config_file)
+carpeta = config.get('carpeta_datos')
+carpeta_dato = carpeta + 'operativo/'
+carpeta_figuras = config.get('carpeta_figuras') + variable + '/'
+corregir = str_to_bool(config.get('corregir'))
 
 
 # leer fechas correspondientes a GMAO
 fechas_gmao = pd.read_csv('./fechas_gmao.csv', sep=';')
 
+nombre_var = {'pr': 'Acumulado semanal de lluvia', 
+              'tas': 'Temperatura media de la semana'}
 print('#####################################################')
 print('######## Elaboracion de pronostico operativo ########')
 print('######## Fecha inicio de pronostico:', fecha, '####')
-print('######## Variable de pronostico:', variable, '####')
-#print('######## Percentil de pronostico:', percentil, '####')
+print('######## Variable de pronostico:', nombre_var[variable], '####')
+if corregir:
+    print(u'######## Se elaboran figuras con pronóstico corregido ####')
+else:
+    print(u'######## Se elaboran figuras con pronóstico SIN corregir ####')
 
 #####################
 # Descarga del dato
@@ -115,10 +128,10 @@ for percentil in ['20', '80']:
     for week, f1, f2 in zip([1,2,3], f1s, f2s):
         print('######### Figura semana:', week)
         if percentil == '20':
-            mapa_probabilidad(variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=True)
+            mapa_probabilidad(variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
             #mapa_probabilidad(variable, p1_20, percentil, week, modelo, f1, f2, c_out_f, corr=False)
         elif percentil == '80':
-            mapa_probabilidad(variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=True)
+            mapa_probabilidad(variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
             #mapa_probabilidad(variable, p1_80, percentil, week, modelo, f1, f2, c_out_f, corr=False)
         
 

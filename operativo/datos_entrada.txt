@@ -1,0 +1,3 @@
+carpeta_datos = "d:/subseasonal_SISSA/datos/"
+carpeta_figuras = "d:/subseasonal_SISSA/figuras/operativo/"
+corregir = "True"

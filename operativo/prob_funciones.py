@@ -9,6 +9,11 @@ from matplotlib import colors as c
 import cartopy.crs as ccrs
 
 from funciones_extra import grouping_coord, grouping_coord_fecha
+from funciones_extra import parse_config
+
+
+def change_year(date):
+    return pd.Timestamp(date).replace(year=1960).to_datetime64()
 
 def get_prono_data(archivo, variable, miercoles):
     fcst = xr.open_dataset(archivo)
@@ -90,6 +95,9 @@ def get_prono_data_CFS(a0, variable, miercoles):
 def get_hindcast_data(archivo, variable, fecha, miercoles):
     hcst = xr.open_dataset(archivo)
     # seleccionar los datos a partir de inicio de pronóstico
+    if hcst.S.dt.year[0] != 1960:
+        print('fechas distintas a 1960')
+        hcst['S'] = xr.apply_ufunc(change_year, hcst['S'], vectorize=True)  # Ensures the function is applied element-wise
     mes = fecha.month
     dia = fecha.day
     f1 = dt.datetime(1960, int(mes), int(dia))
@@ -168,7 +176,12 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
 
 
 def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
-    carpeta = 'D:/subseasonal_SISSA/datos/'
+    # Archivo con carpetas
+    config_file = 'datos_entrada.txt'
+    # Leemos el archivo
+    config = parse_config(config_file)
+    carpeta = config.get('carpeta_datos')
+    #carpeta = 'D:/subseasonal_SISSA/datos/'
     fecha_str = fecha.strftime('%Y%m%d%H%M')
     mierc_str = miercoles.strftime('%Y%m%d%H%M')
     varn = {'tas':'tmean', 'tasmin':'tmin', 'tasmax':'tmax', 'pr':'rain', 'zg':'z200'}
@@ -256,7 +269,12 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
         cp = 0.2
     else:
         cp = 0.5
-    c_PAC = 'D:/subseasonal_SISSA/datos/PAC/' + variable + '/'
+    # Archivo con carpetas
+    config_file = 'datos_entrada.txt'
+    # Leemos el archivo
+    config = parse_config(config_file)
+    carpeta = config.get('carpeta_datos')
+    c_PAC = carpeta + 'PAC/' + variable + '/'
     if (percentil == '20') or (percentil == '80'):
         " Lista vacia para p2, ie el percentil es 20 o 80"
         list_corr = []

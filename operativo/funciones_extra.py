@@ -1,3 +1,4 @@
+import re
 import os
 import glob
 import requests
@@ -15,6 +16,24 @@ from cartopy.io.shapereader import natural_earth
 import matplotlib.pyplot as plt
 from matplotlib import colors as c
 
+
+def parse_config(file_path):
+    config = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            # Use regex to match the variable name and value
+            match = re.match(r'(\w+)\s*=\s*"(.*)"', line.strip())
+            if match:
+                config[match.group(1)] = match.group(2)
+    return config
+
+def str_to_bool(s):
+    if s == 'True':
+         return True
+    elif s == 'False':
+         return False
+    else:
+         raise ValueError
 
 
 def gen_url_download(fecha, variable='tas', tipo='forecast', conj='ECCC', modelo='GEPS8'):
@@ -267,7 +286,6 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
     norm = c.BoundaryNorm(boundaries=bounds, ncolors=len(c_pp))#, extend='both')
     # Datos para el mapa
     datap = prob.sel(semanas=week).to_numpy()
-    #print(np.min(datap), np.mean(datap), np.max(datap))
     x = prob.X.to_numpy()
     y = prob.Y.to_numpy()
     data = datap.copy()
@@ -283,18 +301,16 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
         ax.set_title('Semanas 3 y 4; ' + titulof, loc='right', fontsize=7)
         if corr:
             nome_fig = c_out + 'pronostico_corregido_semana_3y4_' + modelo + '.jpg'
-            plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
         else:
             nome_fig = c_out + 'pronostico_semana_3y4_' + modelo + '.jpg'
-            plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
+        plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
     else:
         ax.set_title('Semana ' + str(week) + '; ' + titulof, loc='right', fontsize=7)
         if corr:
             nome_fig = c_out + 'pronostico_corregido_semana_' + str(week) + '_' + modelo +'.jpg'
-            plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
         else:
             nome_fig = c_out + 'pronostico_semana_' + str(week) + '_' + modelo + '.jpg'
-            plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
+        plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
     
     
     plt.close(fig)
