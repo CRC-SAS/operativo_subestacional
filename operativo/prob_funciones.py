@@ -131,7 +131,10 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     #
     media = xr.concat([media0, media1], dim='S')
     media = media[variable].sel(S=slice(f1, f2))
-    media = media.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'logitude', 'latitude'}).issubset(media.dims):
+        media = media.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'lon', 'lat'}).issubset(media.dims):
+        media = media.rename({'lon': 'X','lat': 'Y'})
     #    
     media1, fechas = grouping_coord_fecha(media, miercoles, hcast=1)
 
@@ -150,7 +153,10 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     # 1 valor para cada semana
     pctil1 = xr.open_dataset(archivo0)
     pctil1 = pctil1[variable]
-    pctil1 = pctil1.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'logitude', 'latitude'}).issubset(pctil1.dims):
+        pctil1 = pctil1.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'lon', 'lat'}).issubset(pctil1.dims):
+        pctil1 = pctil1.rename({'lon': 'X','lat': 'Y'})
     pctil1 = pctil1.sel(S=fechas_o[0:2])
     # Interpolamos a la reticula de subX
     pctil1_i = pctil1.interp_like(dato_o)
@@ -161,7 +167,10 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     # 1 valor para cada promedio de 2 semanas
     pctil2 = xr.open_dataset(archivo1)
     pctil2 = pctil2[variable]
-    pctil2 = pctil2.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'logitude', 'latitude'}).issubset(pctil2.dims):
+        pctil2 = pctil2.rename({'longitude': 'X','latitude': 'Y'})
+    if ({'lon', 'lat'}).issubset(pctil2.dims):
+        pctil2 = pctil2.rename({'lon': 'X','lat': 'Y'})
     pctil2 = pctil2.sel(S=fechas_o[2:4])
     # Interpolamos a la reticula de subX
     pctil2_i = pctil2.interp_like(dato_o)
