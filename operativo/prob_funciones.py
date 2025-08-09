@@ -137,7 +137,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
 
     if variable == 'tmean':
         media_m = media1.groupby('semanas').mean(dim='S').squeeze()
-    elif variable == 'rain':
+    elif variable == 'precip':
         media_m = media1.groupby('semanas').sum(dim='S').squeeze()
     # Interpolamos a la reticula de subX
     media_m_i = media_m.interp_like(dato_o)
@@ -184,7 +184,7 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     #carpeta = 'D:/subseasonal_SISSA/datos/'
     fecha_str = fecha.strftime('%Y%m%d%H%M')
     mierc_str = miercoles.strftime('%Y%m%d%H%M')
-    varn = {'tas':'tmean', 'tasmin':'tmin', 'tasmax':'tmax', 'pr':'rain', 'zg':'z200'}
+    varn = {'tas':'tmean', 'tasmin':'tmin', 'tasmax':'tmax', 'pr':'precip', 'zg':'z200'}
     nf1 = variable +'_' + modelo + '_' + fecha_str + '_forecast.nc'
     #######
     print('$$$$$$$$$$$$$$ DATOS UTILIZADOS $$$$$$$$$$$$$$$$$$$$$')
