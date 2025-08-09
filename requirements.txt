@@ -1,0 +1,9 @@
+cartopy
+matplotlib
+netcdf4
+numpy
+pandas
+requests
+scipy
+validators
+xarray
