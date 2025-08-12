@@ -1,14 +1,11 @@
-import os
+
 import glob
 import datetime as dt
 import numpy as np
 import pandas as pd
 import xarray as xr
-import matplotlib.pyplot as plt
-from matplotlib import colors as c
-import cartopy.crs as ccrs
 
-from funciones_extra import grouping_coord, grouping_coord_fecha
+from funciones_extra import grouping_coord_fecha
 from funciones_extra import parse_config
 
 

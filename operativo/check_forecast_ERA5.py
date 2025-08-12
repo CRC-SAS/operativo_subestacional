@@ -1,8 +1,10 @@
+
 import xarray as xr
 import pandas as pd
 import datetime as dt
-import matplotlib.pyplot as plt
+
 from funciones_extra import mapa_chequeo
+
 
 d0 = xr.open_dataset('../datos/operativo/forecast/tas/202501220000/tas_GEFSv12_CPC_202501220000_forecast.nc').tas
 #d0 = xr.open_dataset('../datos/operativo/forecast/tas/202501010000/tas_GEFSv12_CPC_202501010000_forecast.nc').tas
