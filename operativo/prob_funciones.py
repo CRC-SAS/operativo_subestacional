@@ -12,6 +12,7 @@ from funciones_extra import parse_config
 def change_year(date):
     return pd.Timestamp(date).replace(year=1960).to_datetime64()
 
+
 def get_prono_data(archivo, variable, miercoles):
     fcst = xr.open_dataset(archivo)
     if 'tas' in list(fcst.variables):
@@ -21,7 +22,8 @@ def get_prono_data(archivo, variable, miercoles):
     fcst, fechas = grouping_coord_fecha(fcst, miercoles, hcast=0)
     fechas_o = [dt.datetime(a.year, a.month, a.day ).replace(year=1960).replace(hour=0) for a in fechas]
     fechas_v = [a for a in fechas]
-    # calculo de media semanal 1, 2, 3y4, 5
+    # cálculo de media semanal 1, 2, 3y4, 5
+    fcst_m = xr.DataArray()
     if variable == 'tas':
         fcst_m = fcst.groupby('semanas').mean(dim='L').squeeze()
     elif variable == 'pr':
@@ -37,6 +39,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
     o2 = np.arange(4, len(archivos)*4+4,4)
     S_old = []
     lista_ds = []
+    time_delta = []
     for i, archivo in enumerate(archivos):
         fcst = xr.open_dataset(archivo)
         if 'tas' in list(fcst.variables):
@@ -79,6 +82,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
     fechas_o = [dt.datetime(a.year, a.month, a.day ).replace(year=1960).replace(hour=0) for a in fechas]
     fechas_v = [a for a in fechas]
     # Calculo de valores semanales 1, 2, 3y4, 5
+    fcst_m = xr.DataArray()
     if variable == 'tas':
         fcst_m = fcst_new.groupby('semanas').mean(dim='L').squeeze()
     elif variable == 'pr':
@@ -91,19 +95,25 @@ def get_prono_data_CFS(a0, variable, miercoles):
 
 def get_hindcast_data(archivo, variable, fecha, miercoles):
     hcst = xr.open_dataset(archivo)
+
     # seleccionar los datos a partir de inicio de pronóstico
     if hcst.S.dt.year[0] != 1960:
         print('fechas distintas a 1960')
         hcst['S'] = xr.apply_ufunc(change_year, hcst['S'], vectorize=True)  # Ensures the function is applied element-wise
+
     mes = fecha.month
     dia = fecha.day
     f1 = dt.datetime(1960, int(mes), int(dia))
+
     if 'tas' in list(hcst.variables):
         hcst = hcst.tas.sel(S=f1) - 273.15
     else:
         hcst = hcst[variable].sel(S=f1)
+
     hcst1, fechas = grouping_coord_fecha(hcst, miercoles, hcast=1)
+
     #### Ojo aca que depende de la variable. Como se trabaja con temperatura, se queda la media.
+    hcst_m = xr.DataArray()
     if variable == 'tas':
         hcst_m = hcst1.groupby('semanas').mean(dim='L').squeeze()
     elif variable == 'pr':
@@ -135,6 +145,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     #    
     media1, fechas = grouping_coord_fecha(media, miercoles, hcast=1)
 
+    media_m = xr.DataArray()
     if variable == 'tmean':
         media_m = media1.groupby('semanas').mean(dim='S').squeeze()
     elif variable == 'precip':
@@ -266,9 +277,9 @@ def calc_prob(fcst_m, hcst_f, media_f, pctil_f, pctil):
 
 
 def calc_prob_corr(p1, p2, variable, modelo, percentil):
-    '''
-    Se corrige la probabilidad obtenida segun el trabajo de Van de Dool et al 2017
-    '''
+    """
+    Se corrige la probabilidad obtenida según el trabajo de Van de Dool et al 2017
+    """
     if str(percentil) == '20':
         cp = 0.2
     elif str(percentil) == '80':
@@ -300,7 +311,7 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
         p1_corr = xr.concat(list_corr, dim='semanas')
         return p1_corr, p1_corr
     else:
-        " Hay datos en p2, ie el percentil es 50 y se calculan probabilidades por sobre y por debajo"
+        "Hay datos en p2, ie el percentil es 50 y se calculan probabilidades por sobre y por debajo"
         list_corr1 = []
         list_corr2 = []
         for week in [1,2,3]:
@@ -341,91 +352,81 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
 
 
 def calc_prob_corr_extr(p1, p2):
-    '''
-    Se corrige la probabilidad obtenida segun el trabajo de Van de Dool et al 2017
-    p1 --> percentil 20
-    p2 --> percentil 80
-    Las "tres clases" en este ejercicio, siguiendo el paper son:
-    p1-> Probabilidad bajo percentil 20
-    p_no -> Probabilidad entre percentil 20 y 80
-    p2-> Probabilidad sobre percentil 80
-
+    """
+    Se corrige la probabilidad obtenida según el trabajo de Van de Dool et al 2017
+        p1 --> percentil 20
+        p2 --> percentil 80
+        Las "tres clases" en este ejercicio, siguiendo el paper son:
+        p1-> Probabilidad bajo percentil 20
+        p_no -> Probabilidad entre percentil 20 y 80
+        p2-> Probabilidad sobre percentil 80
     En este caso, el valor de p_no no se considera.
-    '''
-    iter = 3
+    """
+    max_iter = 3
+
     p1_o = p1.copy()
     p2_o = p2.copy()
+
     ##################################################
-    #Se trabaja con prob percentil 20
+    # Se trabaja con prob percentil 20
     negativo = bool((p1 < 0).any().to_numpy().any())
     i = 1
     if negativo:
-        #print('Hay valores bajo 0 para percentil 20, corregimos')
-        while i<=iter:
-            discrepancy = xr.where(p1<0, p1-1, 0)
-            #sumamos la mitad a donde corresponda
+        while i <= max_iter:
+            discrepancy = xr.where(p1 < 0, p1-1, 0)
+            # sumamos la mitad a donde corresponda
             p2_o = p2 + 0.5*discrepancy
-            p1_o = p1_o.where(p1>=0, 1)
-            i+=1
-    p1_o = p1_o.where(p1_o>=0, 1)
-    
-    negativo = bool((p1_o < 0).any().to_numpy().any())
-    #
-    #print('Negativo final para percentil 20:',negativo)
+            p1_o = p1_o.where(p1 >= 0, 1)
+            i += 1
+    p1_o = p1_o.where(p1_o >= 0, 1)
+
     ###########
     positivo = bool((p1 > 100).any().to_numpy().any())
     i = 1
     if positivo:
-        #print('Hay valores mayores a 100 para percentil 20, corregimos')
-        while i<=iter:
-            discrepancy = xr.where(p1>100., p1-99, 0)
-            #sumamos la mitad a donde corresponda
+        while i <= max_iter:
+            discrepancy = xr.where(p1 > 100., p1-99, 0)
+            # sumamos la mitad a donde corresponda
             p2_o = p2 + 0.5*discrepancy
-            p1_o = p1_o.where(p1<=100, 99)
-            i+=1
+            p1_o = p1_o.where(p1 <= 100, 99)
+            i += 1
     positivo = bool((p1_o > 100).any().to_numpy().any())
     if positivo:
-        p1_o = p1_o.where(p1_o<=100, 99)
-    positivo = bool((p1_o > 100).any().to_numpy().any())
-    #print('Positivo final para percentil 20:', positivo)
+        p1_o = p1_o.where(p1_o <= 100, 99)
 
     ##################################################
     ##################################################
-    #Se trabaja con prob percentil 80
+    # Se trabaja con prob percentil 80
     negativo = bool((p2 < 0).any().to_numpy().any())
     i = 1
     if negativo:
-        #print('Hay valores bajo 0 para percentil 80, corregimos')
-        while i<=iter:
-            discrepancy = xr.where(p2<0, p2 - 1, 0)
-            #sumamos la mitad a donde corresponda
+        while i <= max_iter:
+            discrepancy = xr.where(p2 < 0, p2 - 1, 0)
+            # sumamos la mitad a donde corresponda
             p1_o = p1 + 0.5*discrepancy
-            p2_o = p2_o.where(p2>=0, 1)
-            i+=1
+            p2_o = p2_o.where(p2 >= 0, 1)
+            i += 1
     negativo = bool((p2_o < 0).any().to_numpy().any())
     if negativo:
-        p2_o = p2_o.where(p2_o>=0, 0.)
-    p2_o = p2_o.where(p2_o>=0, 0.)
-    negativo = bool((p2_o < 0).any().to_numpy().any())
-    #print('Negativo final para percentil 80:',negativo)
+        p2_o = p2_o.where(p2_o >= 0, 0.)
+    p2_o = p2_o.where(p2_o >= 0, 0.)
 
     #
     positivo = bool((p2 > 100).any().to_numpy().any())
     i = 1
     if positivo:
-        #print('Hay valores mayores a 100 para percentil 80, corregimos')
-        while i<=iter:
-            discrepancy = xr.where(p2>100., p2 - 99, 0)
-            #sumamos la mitad a donde corresponda
+        while i <= max_iter:
+            discrepancy = xr.where(p2 > 100., p2 - 99, 0)
+            # sumamos la mitad a donde corresponda
             p1_o = p1 + 0.5*discrepancy
-            p2_o = p2_o.where(p2<=100, 99)
-            i+=1
+            p2_o = p2_o.where(p2 <= 100, 99)
+            i += 1
     positivo = bool((p2_o > 100).any().to_numpy().any())
     if positivo:
-        p2_o = p2_o.where(p2_o<=100, 99)
-    positivo = bool((p2_o > 100).any().to_numpy().any())
-    #print('Positivo final para percentil 80:', positivo)
-    p1_o = p1_o.where(p1_o>=0, 1)
-    p1_o = p1_o.where(p1_o<=100, 99)
+        p2_o = p2_o.where(p2_o <= 100, 99)
+
+    p1_o = p1_o.where(p1_o >= 0, 1)
+    p1_o = p1_o.where(p1_o <= 100, 99)
+
     return p1_o, p2_o
 
