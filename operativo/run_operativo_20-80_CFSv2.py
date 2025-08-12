@@ -2,16 +2,19 @@
 import os
 import sys
 import datetime as dt
-import numpy as np
 
 from funciones_extra import descarga_pronostico_CFSv2, mapa_probabilidad
 from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_extr
 from funciones_extra import parse_config, str_to_bool
 
 
+###############################
+# Datos iniciales para correr #
+###############################
+
 fecha = sys.argv[1]
 variable = sys.argv[2]
-#percentil = sys.argv[3]
+
 # Archivo con carpetas
 config_file = 'datos_entrada.txt'
 # Leemos el archivo
@@ -25,49 +28,56 @@ nombre_var = {'pr': 'Acumulado semanal de lluvia',
               'tas': 'Temperatura media de la semana'}
 
 print('#####################################################')
-print('######## Elaboracion de pronostico operativo ########')
-print('######## Fecha inicio de pronostico:', fecha, '####')
-print('######## Variable de pronostico:', nombre_var[variable], '####')
-if corregir:
-    print(u'######## Se elaboran figuras con pronóstico corregido ####')
-else:
-    print(u'######## Se elaboran figuras con pronóstico SIN corregir ####')
+print('######## Elaboración de pronóstico operativo ########')
+print('######## Fecha inicio de pronóstico:', fecha, '####')
+print('######## Variable de pronóstico:', nombre_var[variable], '####')
+print(f'######## Se elaboran figuras con pronóstico {'corregido' if corregir else 'SIN corregir'} ####')
+
 
 #####################
-# Descarga del dato
+# Descarga del dato#
 #####################
+
 miercoles = dt.datetime.strptime(fecha, '%Y%m%d')
 fecha_d = miercoles
-tipo='forecast'; conj='NCEP'; modelo='CFSv2'
-outfolder = carpeta_dato + 'forecast/' + variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
-os.makedirs(outfolder, exist_ok=True)
-outfiles = descarga_pronostico_CFSv2(fecha_d, variable,  outfolder)
-if len(outfiles) > 1:
-    print('Trabajando con los archivos:', outfiles)
 
-#########################
-# Calculo de probabilidades
-#########################
+tipo='forecast'
+conj='NCEP'
+modelo='CFSv2'
+
+out_folder = carpeta_dato + 'forecast/' + variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
+os.makedirs(out_folder, exist_ok=True)
+out_files = descarga_pronostico_CFSv2(fecha_d, variable,  out_folder)
+
+if len(out_files) > 1:
+    print('Trabajando con los archivos:', out_files)
+
+
+#############################
+# Cálculo de probabilidades #
+#############################
+
 # Percentil 20
 fcst_m, hcst_f, media_f, pctil_f, fechas_v = get_data(fecha_d, 20, fecha_d, variable, modelo)
 p1, p2 = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(20))
 p1_20 = p1.sel(semanas=slice(1,3))
 
 # Percentil 80
-fcst_m, hcst_f, media_f, pctil_f, fechas_v = get_data(fecha_d, 80, fecha_d, variable, modelo)
-p1, p2 = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(80))
+fcst_m, hcst_f, media_f, pctil_f, _ = get_data(fecha_d, 80, fecha_d, variable, modelo)
+p1, _ = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(80))
 p1_80 = p1.sel(semanas=slice(1,3))
 
-# Correcion de probabilidad por PAC
-p1_20_corr, p2_corr = calc_prob_corr(p1_20, p2, variable, modelo, '20')
-p1_80_corr, p2_corr = calc_prob_corr(p1_80, p2, variable, modelo, '80')
+# Corrección de probabilidad por PAC
+p1_20_corr, p2_20_corr = calc_prob_corr(p1_20, p2, variable, modelo, '20')
+p1_80_corr, p2_80_corr = calc_prob_corr(p1_80, p2, variable, modelo, '80')
 
-# Correcion de probabilidad negativas/positivas
+# Corrección de probabilidad negativas/positivas
 p1_20_final, p1_80_final = calc_prob_corr_extr(p1_20_corr, p1_80_corr)
 
 #########################
-# Generacion de archivo
+# Generación de archivo #
 #########################
+
 for percentil in ['20', '80']:
     fecha_str = fecha_d.strftime('%Y%m%d%H%M')
     fecha_mie = miercoles.strftime('%Y%m%d%H%M')
@@ -83,9 +93,13 @@ for percentil in ['20', '80']:
     else:
         p1.to_netcdf(n_archivo0)
         p2.to_netcdf(n_archivo1)
-    ###########################
-    # Generacion de figuras
-    ###########################
+
+
+#########################
+# Generación de figuras #
+#########################
+
+for percentil in ['20', '80']:
     c_out_f = carpeta_figuras + fecha_str + '/' + percentil + '/'
     os.makedirs(c_out_f, exist_ok=True)
 
@@ -98,10 +112,8 @@ for percentil in ['20', '80']:
         print('######### Figura semana:', week)
         if percentil == '20':
             mapa_probabilidad(variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
-            #mapa_probabilidad(variable, p1_20, percentil, week, modelo, f1, f2, c_out_f, corr=False)
         elif percentil == '80':
             mapa_probabilidad(variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
-            #mapa_probabilidad(variable, p1_80, percentil, week, modelo, f1, f2, c_out_f, corr=False)
         
 
 print('############ Fin de pronostico operativo ############')

@@ -7,12 +7,8 @@ from funciones_extra import mapa_chequeo
 
 
 d0 = xr.open_dataset('../datos/operativo/forecast/tas/202501220000/tas_GEFSv12_CPC_202501220000_forecast.nc').tas
-#d0 = xr.open_dataset('../datos/operativo/forecast/tas/202501010000/tas_GEFSv12_CPC_202501010000_forecast.nc').tas
 print(d0)
 
-
-#fi = [dt.datetime(2025,1,2), dt.datetime(2025,1,9), dt.datetime(2025,1,16)]
-#ff = [dt.datetime(2025,1,8), dt.datetime(2025,2,15), dt.datetime(2025,1,29)]
 fi = [dt.datetime(2025,1,23), dt.datetime(2025,1,30), dt.datetime(2025,2,6)]
 ff = [dt.datetime(2025,1,29), dt.datetime(2025,2,5), dt.datetime(2025,2,19)]
 ds = xr.open_dataset('../datos/2025_diario.nc')
