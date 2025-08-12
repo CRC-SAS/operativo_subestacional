@@ -14,14 +14,18 @@ def change_year(date):
 
 
 def get_prono_data(archivo, variable, miercoles):
+
     fcst = xr.open_dataset(archivo)
+
     if 'tas' in list(fcst.variables):
         fcst = fcst.tas - 273.15
     else:
         fcst = fcst[variable]
+
     fcst, fechas = grouping_coord_fecha(fcst, miercoles, hcast=0)
     fechas_o = [dt.datetime(a.year, a.month, a.day ).replace(year=1960).replace(hour=0) for a in fechas]
     fechas_v = [a for a in fechas]
+
     # cálculo de media semanal 1, 2, 3y4, 5
     fcst_m = xr.DataArray()
     if variable == 'tas':
@@ -34,12 +38,16 @@ def get_prono_data(archivo, variable, miercoles):
     return fcst_m, fechas_o, fechas_v
 
 def get_prono_data_CFS(a0, variable, miercoles):
+
     archivos = sorted(glob.glob(a0 + '*CFSv2*.nc'), reverse=True)
+
     o1 = np.arange(1,len(archivos)*4,4)
     o2 = np.arange(4, len(archivos)*4+4,4)
+
     S_old = []
     lista_ds = []
     time_delta = []
+
     for i, archivo in enumerate(archivos):
         fcst = xr.open_dataset(archivo)
         if 'tas' in list(fcst.variables):
@@ -76,11 +84,13 @@ def get_prono_data_CFS(a0, variable, miercoles):
         fcst_selected = fcst_selected.rename({'L_new':'L'})
         # Agregamos a la lista para luego concatenar
         lista_ds.append(fcst_selected)
+
     ds = xr.concat(lista_ds, dim='M')
     ds.attrs['old_start_date'] = S_old
     fcst_new, fechas = grouping_coord_fecha(ds, miercoles, hcast=0)
     fechas_o = [dt.datetime(a.year, a.month, a.day ).replace(year=1960).replace(hour=0) for a in fechas]
     fechas_v = [a for a in fechas]
+
     # Calculo de valores semanales 1, 2, 3y4, 5
     fcst_m = xr.DataArray()
     if variable == 'tas':
@@ -94,6 +104,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
 
 
 def get_hindcast_data(archivo, variable, fecha, miercoles):
+
     hcst = xr.open_dataset(archivo)
 
     # seleccionar los datos a partir de inicio de pronóstico
@@ -125,6 +136,7 @@ def get_hindcast_data(archivo, variable, fecha, miercoles):
 
 
 def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
+
     ##### Media diaria ERA5 (la de CPC andaba mal)
     # se extraen los datos de la semana
     # se extiende el año hasta el 28 de febrero.
@@ -144,7 +156,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
         media = media.rename({'lon': 'X','lat': 'Y'})
     #    
     media1, fechas = grouping_coord_fecha(media, miercoles, hcast=1)
-
+    #
     media_m = xr.DataArray()
     if variable == 'tmean':
         media_m = media1.groupby('semanas').mean(dim='S').squeeze()
@@ -152,12 +164,14 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
         media_m = media1.groupby('semanas').sum(dim='S').squeeze()
     # Interpolamos a la reticula de subX
     media_m_i = media_m.interp_like(dato_o)
-
+    #
     return media_m_i
 
 
 def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
+
     ##### Percentil ERA5
+
     # 1 valor para cada semana
     pctil1 = xr.open_dataset(archivo0)
     pctil1 = pctil1[variable]
@@ -193,17 +207,22 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
 
 
 def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
+
     # Archivo con carpetas
     config_file = 'datos_entrada.txt'
+
     # Leemos el archivo
     config = parse_config(config_file)
     carpeta = config.get('carpeta_datos')
-    #carpeta = 'D:/subseasonal_SISSA/datos/'
+
     fecha_str = fecha.strftime('%Y%m%d%H%M')
     mierc_str = miercoles.strftime('%Y%m%d%H%M')
+
     varn = {'tas':'tmean', 'tasmin':'tmin', 'tasmax':'tmax', 'pr':'precip', 'zg':'z200'}
+
     nf1 = variable +'_' + modelo + '_' + fecha_str + '_forecast.nc'
-    #######
+
+    ################################
     print('$$$$$$$$$$$$$$ DATOS UTILIZADOS $$$$$$$$$$$$$$$$$$$$$')
     if modelo == 'CFSv2':
         a0 = carpeta + 'operativo/forecast/' + variable + '/' + mierc_str + '/'
@@ -217,6 +236,7 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     a2 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + 'ClimSmooth.nc'
     a3 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + '_weeklymean_pctile' + str(pctil) + '_smooth.nc'
     a4 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + '_2weeklymean_pctile' + str(pctil) + '_smooth.nc'
+
     ################################    
     print('$$$$ Archivo hindcast:', a1)
     print('$$$$ Archivo diario historico:', a2)
@@ -224,7 +244,6 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     print('$$$$ Archivo percentil 2 semana:', a4)
     print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
 
-    
     if modelo == 'CFSv2':
         fcst_m, fechas_o, fechas_v = get_prono_data_CFS(a0, variable, miercoles)
     else:

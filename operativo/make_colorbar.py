@@ -23,6 +23,7 @@ cb = mpl.colorbar.ColorbarBase(ax, orientation='vertical',
                                norm=norm,
                                ticks=bounds,
                                drawedges=True)
+
 cb.ax.yaxis.set_ticks_position('left')
 cb.ax.set_title('Prob. (%)', weight='bold')
 cb.ax.set_yticklabels(tick_l, weight='bold', fontsize=9)
@@ -39,6 +40,7 @@ cb = mpl.colorbar.ColorbarBase(ax, orientation='horizontal',
                                norm=norm,
                                ticks=bounds,
                                drawedges=True)
+
 cb.ax.xaxis.set_ticks_position('bottom')
 cb.ax.set_title('Prob. (%)', weight='bold')
 cb.ax.set_xticklabels(tick_l, weight='bold', fontsize=9)

@@ -80,11 +80,12 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
 
 
 def descarga_pronostico_CFSv2(fecha, variable, out_folder):
+
     tipo = 'forecast'
     conj = 'NCEP'
     modelo = 'CFSv2'
-    fechas_file = [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]
-    for fechai in fechas_file:
+
+    for fechai in [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]:
         url_out = gen_url_download(fechai, variable, tipo, conj, modelo)
         out_file = out_folder + variable + '_' + modelo + '_' + fechai.strftime('%Y%m%d%H%M') + '_forecast.nc'
         if os.path.isfile(out_file):
@@ -95,13 +96,14 @@ def descarga_pronostico_CFSv2(fecha, variable, out_folder):
                 with requests.get(url_out, stream=True) as r:
                    shutil.copyfileobj(r.raw, out_file)
             else:
-                print("Invalid url")
+                print("Invalid URL")
     out_files = sorted(glob.glob(out_folder + '*' + modelo + '*.nc'), reverse=True)
     
     return out_files
 
 
 def grouping_coord(ds):
+
     if 'L' in list(ds.dims):
         N = ds.sizes['L']  # Largo de pronóstico
         semanas = np.ones(N)
@@ -116,20 +118,23 @@ def grouping_coord(ds):
         semanas[14:28] = 3
         semanas[28:] = 5
         ds = ds.assign_coords(semanas=('S', semanas))
+
     return ds
 
 
 def grouping_coord_fecha(ds, miercoles, hcast=0):
-    # Se utiliza para ajustar con modelos que no sean
-    # GEFS (L=34) ni GEPS8 (L=39) /GEPS7 (L=32)
-    # GEOS_V2p1 (L=45)
 
     f_model = []
     sem1_i, sem2_i, sem3_i, sem4_i = pd.NaT, pd.NaT, pd.NaT, pd.NaT
 
+    # Se utiliza para ajustar con modelos que no sean
+    # GEFS (L=34) ni GEPS8 (L=39) /GEPS7 (L=32)
+    # GEOS_V2p1 (L=45)
     if 'L' in list(ds.dims):
+
         N = ds.sizes['L']  # Largo de pronóstico
         semanas = np.zeros(N)
+
         # Fechas correspondientes al inicio de las semanas 1, 2 y 3/4 y 5
         if hcast == 0:
             f_model = (ds.S+ds.L).values[0]
@@ -179,16 +184,20 @@ def grouping_coord_fecha(ds, miercoles, hcast=0):
         semanas[i3:i3+14] = 3
         semanas[i3+14:] = 5
         ds = ds.assign_coords(semanas=('L', semanas))
+
     else:
+
         N = ds.sizes['S']  # Largo de pronóstico
         semanas = np.ones(N)
         f_model = (ds.S).values
+
         if pd.Timestamp(f_model[0]) <= miercoles:
             # El modelo tiene datos antes del miercoles guía.
             # Usamos la primera semana desde el jueves para alinear con GEFS esa semana.
             sem1_i = pd.Timestamp(miercoles + dt.timedelta(days=1) + dt.timedelta(hours=12))
         else:
             sem1_i = pd.Timestamp(f_model[0])
+
         sem2_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=8))
         sem3_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=15))
         sem4_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=29))
@@ -205,8 +214,10 @@ def grouping_coord_fecha(ds, miercoles, hcast=0):
         semanas[i3+14:] = 5
         #
         ds = ds.assign_coords(semanas=('S', semanas))
+
     fechas_iniciales = [sem1_i, sem2_i, sem3_i, sem4_i]
     f_out = [a.date() for a in fechas_iniciales]
+
     return ds, f_out
 
 
@@ -251,6 +262,7 @@ def mapa_base(llat, llon, figure_size=(6,8)):
 
 
 def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, corr=True):
+
     # Extension del mapa
     llat = [-57, -8]
     llon = [-82, -33]
@@ -326,21 +338,26 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
 
 
 def mapa_chequeo(chequeo, f1, f2, nome_fig):
+
     # Extension del mapa
     llat = [-57, -8]
     llon = [-82, -33]
+
     x = chequeo.X.to_numpy()
     y = chequeo.Y.to_numpy()
     data = chequeo.copy()
+
     # Titulo fechas:
     titulof = 'Inicio: ' + f1.strftime('%HH %d/%m/%Y') + '\n ' + f2.strftime('%d/%m/%Y')
     titulo = 'Chequeo pronostico percentil 80 '
+
     # Define the custom colormap
     colors = ['white', 'limegreen']
     c_map = c.ListedColormap(colors)
+
+    # Generar mapa
     fig, ax = mapa_base(llat, llon)
     ax.pcolormesh(x, y, data, cmap=c_map, vmin=0, vmax=1, transform=ccrs.PlateCarree())
     ax.set_title(titulo, loc='left', fontsize=7)
     ax.set_title(titulof, loc='right', fontsize=7)
     plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
-
