@@ -10,10 +10,10 @@ import datetime as dt
 
 import cartopy.crs as ccrs
 import cartopy.feature as cpf
+import matplotlib.pyplot as plt
+
 from cartopy.io.shapereader import Reader
 from cartopy.io.shapereader import natural_earth
-
-import matplotlib.pyplot as plt
 from matplotlib import colors as c
 
 
@@ -215,20 +215,25 @@ def mapa_base(llat, llon, figure_size=(6,8)):
 
     l_lat = llat
     l_lon = np.array(llon) % 360  #Pasamos lon en [-180, 180] a [0, 360]
-    
+
+    proj_lcc = ccrs.PlateCarree()
+
     # Comenzamos la Figura
     fig = plt.figure(figsize=figure_size)
-    proj_lcc = ccrs.PlateCarree()
-    ax = plt.axes(projection=proj_lcc)
-    shp = Reader(natural_earth(resolution='10m', category='cultural',
-                               name='admin_1_states_provinces_lines'))
-    
-    countries = shp.records()
+    ax = fig.add_subplot(1, 1, 1, projection=proj_lcc)
+
+    # Agregar límites de paises
     ax.coastlines(resolution='10m')
     ax.add_feature(cpf.BORDERS, linestyle='-')
-    for country in countries:
-        ax.add_geometries( [country.geometry], ccrs.PlateCarree(),
-                            edgecolor='grey', facecolor='none', linewidth=0.5 )
+
+    # Agregar límites administrativos de nivel 1
+    shp_name = natural_earth(resolution='10m', category='cultural', name='admin_1_states_provinces_lines')
+    geometrias, paises = [], ["Argentina", "Bolivia", "Brazil", "Chile", "Paraguay", "Peru", "Uruguay"]
+    for country in Reader(shp_name).records():
+        if country.attributes['ADM0_NAME'] in paises:
+            geometrias.append(country.geometry)
+    ax.add_geometries(geometrias, proj_lcc, edgecolor='grey', facecolor='none', linewidth=0.5)
+
     # Extension del mapa
     ax.set_extent([l_lon[0], l_lon[1], l_lat[0], l_lat[1]], crs=proj_lcc)
     # Posicion del eje (desplazamos un poco a la izquierda y más abajo)
