@@ -83,13 +83,13 @@ CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
 
 
 # CONSTRUIR IMAGEN (PYCHARM CORE)
-# docker build --force-rm \
+# docker build \
 #   --tag pycharm-core:latest \
 #   --build-arg BASE_IMAGE="prono-subestacional:latest" \
 #   --file Dockerfile.pycharm .
 
 # CONSTRUIR IMAGEN (PYCHARM NON-ROOT)
-# docker build --force-rm \
+# docker build \
 #   --tag pycharm-subestacional:latest \
 #   --build-arg BASE_IMAGE="pycharm-core:latest" \
 #   --build-arg USER_UID=$(stat -c "%u" .) \

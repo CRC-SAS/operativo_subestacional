@@ -93,7 +93,7 @@ RUN echo "${USR_NAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USR_NAME} && \
 
 
 # CONSTRUIR IMAGEN (NON-ROOT)
-# docker build --force-rm \
+# docker build \
 #   --tag nonroot-subestacional:latest \
 #   --build-arg BASE_IMAGE="prono-subestacional:latest" \
 #   --build-arg USER_UID=$(stat -c "%u" .) \

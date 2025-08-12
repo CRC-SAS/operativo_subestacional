@@ -189,11 +189,14 @@ ARG APP_HOME
 # Setup CRON for root user
 RUN (cat ${APP_HOME}/crontab.txt) | crontab -
 
-# Create linux XDG_* folders (to use: docker run --user uid:gid)
-RUN mkdir -p /root/xdg_folders/.local/share && \
-    mkdir -p /root/xdg_folders/.cache && \
-    mkdir -p /root/xdg_folders/.config && \
-    chmod -R 777 /root/xdg_folders
+# Create standard directories used for specific types of user-specific data, as defined 
+# by the XDG Base Directory Specification. For when "docker run --user uid:gid" is used.
+# OBS: don't forget to add --env HOME=/home when running the container.
+RUN mkdir -p /home/.local/share && \
+    mkdir -p /home/.cache && \
+    mkdir -p /home/.config
+# Set permissions, for when "docker run --user uid:gid" is used
+RUN chmod -R a+rwx /home/.local /home/.cache /home/.config
 
 # Add Tini (https://github.com/krallin/tini#using-tini)
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--" ]
@@ -213,8 +216,7 @@ WORKDIR ${APP_HOME}
 
 
 # CONSTRUIR IMAGEN (CORE)
-# docker build --force-rm \
-#   --target app-core \
+# docker build --pull \
 #   --tag prono-subestacional:latest \
 #   --file Dockerfile .
 
@@ -223,24 +225,34 @@ WORKDIR ${APP_HOME}
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
-#   --env XDG_DATA_HOME=/root/xdg_folders/.local/share \
-#   --env XDG_CACHE_HOME=/root/xdg_folders/.cache \
-#   --env XDG_CONFIG_HOME=/root/xdg_folders/.config \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
+#   --workdir /opt/pronos/scripts \
 #   --tty --interactive prono-subestacional:latest \
 #   python /opt/pronos/scripts/run_operativo_20-80_GEPS8.py 20250101 pr
 
 # CONSTRUIR IMAGEN (NON-ROOT)
-# docker build --force-rm \
+# docker build \
 #   --tag prono-subestacional:nonroot \
 #   --build-arg BASE_IMAGE="prono-subestacional:latest" \
 #   --build-arg USER_UID=$(stat -c "%u" .) \
 #   --build-arg USER_GID=$(stat -c "%g" .) \
 #   --file Dockerfile.nonroot .
 
+# CORRER MANUALMENTE
+# docker run --rm \
+#   --name prono-subestacional \
+#   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
+#   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
+#   --workdir /opt/pronos/scripts \
+#   --tty --interactive prono-subestacional:nonroot \
+#   python /opt/pronos/scripts/run_operativo_20-80_GEPS8.py 20250101 pr
+
 # CORRER OPERATIVAMENTE
 # docker run --rm \
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
+#   --workdir /opt/pronos/scripts \
 #   --detach prono-subestacional:nonroot
