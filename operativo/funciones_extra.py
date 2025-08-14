@@ -280,29 +280,33 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
             titulo = 'Prob. Corr. por debajo del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#edf8b1', '#c7e9b4', '#7fcdbb', '#41b6c4', '#1d91c0', '#225ea8', '#253494', '#081d58']
+        # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlGnBu'))(10)
+        c_pp = ['#FFFFD9', '#EFF8B5', '#CFECB3', '#97D6B8', '#5CC0C0', '#30A5C2', '#1E80B8', '#2254A3', '#21318D', '#081D58']
     elif ((percentil == '80') or (percentil == '50+')) & (variable=='tas'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por encima del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026']
+        # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlOrRd'))(10)
+        c_pp = ['#FFFFCC', '#FFEFA4', '#FEDD7F', '#FEBF5A', '#FD9D43', '#FC7134', '#F33C25', '#DA141E', '#B60026', '#800026']
     elif ((percentil == '20') or (percentil == '50-')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por debajo del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#fff7bc', '#fee391', '#fec44f', '#fe9929', '#ec7014', '#cc4c02', '#993404', '#662506']
+        # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlOrBr'))(10)
+        c_pp = ['#FFFFE5', '#FFF7C0', '#FEE79A', '#FECE65', '#FEAC39', '#F6861F', '#E1640E', '#C04602', '#933204', '#662506']
     elif ((percentil == '80') or (percentil == '50+')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por encima del percentil ' + percentil[0:2]
-        c_pp = ['#ffffff', '#ece2f0', '#d0d1e6', '#a6bddb', '#67a9cf', '#3690c0', '#02818a', '#016c59', '#014636']
+        # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'PuBuGn'))(10)
+        c_pp = ['#FFF7FB', '#EEE4F1', '#D6D4E8', '#B4C3DE', '#83B1D4', '#519DC8', '#248BAE', '#017C7F', '#016755', '#014636']
 
     c_map = c.ListedColormap(c_pp)
     c_map.set_bad(color='deeppink')
-    bounds = np.array([0, 20.01, 30.01, 40.01, 50.01, 60.01, 70.01, 80.01, 90.01, 100.01])
+    bounds = np.array([0, 10.01, 20.01, 30.01, 40.01, 50.01, 60.01, 70.01, 80.01, 90.01, 100.01])
     norm = c.BoundaryNorm(boundaries=bounds, ncolors=len(c_pp))
 
     # Datos para el mapa
