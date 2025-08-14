@@ -15,7 +15,7 @@ def change_year(date):
 
 def get_prono_data(archivo, variable, miercoles):
 
-    fcst = xr.open_dataset(archivo)
+    fcst = xr.open_dataset(archivo, engine='netcdf4', decode_timedelta=True)
 
     if 'tas' in list(fcst.variables):
         fcst = fcst.tas - 273.15
@@ -49,7 +49,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
     time_delta = []
 
     for i, archivo in enumerate(archivos):
-        fcst = xr.open_dataset(archivo)
+        fcst = xr.open_dataset(archivo, engine='netcdf4', decode_timedelta=True)
         if 'tas' in list(fcst.variables):
             fcst = fcst.tas - 273.15
         else:
@@ -105,7 +105,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
 
 def get_hindcast_data(archivo, variable, fecha, miercoles):
 
-    hcst = xr.open_dataset(archivo)
+    hcst = xr.open_dataset(archivo, decode_timedelta=True)
 
     # seleccionar los datos a partir de inicio de pronóstico
     if hcst.S.dt.year[0] != 1960:
@@ -140,7 +140,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     ##### Media diaria ERA5 (la de CPC andaba mal)
     # se extraen los datos de la semana
     # se extiende el año hasta el 28 de febrero.
-    media0 = xr.open_dataset(archivo)
+    media0 = xr.open_dataset(archivo, engine='netcdf4', decode_timedelta=True)
     media1 = media0.sel(S=slice('1960-01-01', '1960-02-28')).copy()
     new_time_coords = pd.date_range(start='1961-01-01', end='1961-02-28', freq='D')
     media1 = media1.assign_coords(time=('S', new_time_coords))
@@ -173,7 +173,7 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     ##### Percentil ERA5
 
     # 1 valor para cada semana
-    pctil1 = xr.open_dataset(archivo0)
+    pctil1 = xr.open_dataset(archivo0, engine='netcdf4', decode_timedelta=True)
     pctil1 = pctil1[variable]
     if ({'logitude', 'latitude'}).issubset(pctil1.dims):
         pctil1 = pctil1.rename({'longitude': 'X','latitude': 'Y'})
@@ -187,7 +187,7 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     pctil1_i = pctil1_i.assign_coords(semanas=('S', np.array([1.,2.]))).swap_dims({'S':'semanas'})
     
     # 1 valor para cada promedio de 2 semanas
-    pctil2 = xr.open_dataset(archivo1)
+    pctil2 = xr.open_dataset(archivo1, engine='netcdf4', decode_timedelta=True)
     pctil2 = pctil2[variable]
     if ({'logitude', 'latitude'}).issubset(pctil2.dims):
         pctil2 = pctil2.rename({'longitude': 'X','latitude': 'Y'})
@@ -227,11 +227,11 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     if modelo == 'CFSv2':
         a0 = carpeta + 'operativo/forecast/' + variable + '/' + mierc_str + '/'
         print('$$$$ Archivos pronosticos en:', a0)
-        fcst_len = xr.open_dataset(glob.glob(a0+'*.nc')[0], engine='netcdf4').sizes['L']-1
+        fcst_len = xr.open_dataset(glob.glob(a0+'*.nc')[0], engine='netcdf4', decode_timedelta=True).sizes['L']-1
     else:
         a0 = carpeta + 'operativo/forecast/' + variable + '/' + mierc_str + '/' + nf1
         print('$$$$ Archivo pronostico:', a0)
-        fcst_len = xr.open_dataset(a0, engine='netcdf4').sizes['L']-1
+        fcst_len = xr.open_dataset(a0, engine='netcdf4', decode_timedelta=True).sizes['L']-1
     a1 = carpeta + 'hindcast/' + variable +'_' + modelo + '_datos.nc'
     a2 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + 'ClimSmooth.nc'
     a3 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + '_weeklymean_pctile' + str(pctil) + '_smooth.nc'
@@ -318,9 +318,9 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             f1 = c_PAC + '/' + modelo + '/' + variable + '_PAC_semana' + str(week) + '_pctil' + str(percentil) + '.nc'
             f2 = c_PAC + '/' + modelo + '/' + variable + '_stdo_semana' + str(week) + '_pctil' + str(percentil) + '.nc'
             f3 = c_PAC + '/' + modelo + '/' + variable + '_stdp_semana' + str(week) + '_pctil' + str(percentil) + '.nc'
-            PAC = xr.open_dataset(f1)['PAC']
-            std_o = xr.open_dataset(f2)['std_o']
-            std_p = xr.open_dataset(f3)['std_p']
+            PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
+            std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
+            std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
             corr_factor = PAC*(std_o/std_p)
             prob = p1.sel(semanas=week)*0.01
             p_corr = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
@@ -340,9 +340,9 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             f3 = c_PAC + '/' + modelo + '/' + variable + '_stdp_semana' + str(week) + '_pctil50-.nc'
             # ################
             # para 50-
-            PAC = xr.open_dataset(f1)['PAC']
-            std_o = xr.open_dataset(f2)['std_o']
-            std_p = xr.open_dataset(f3)['std_p']
+            PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
+            std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
+            std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
             corr_factor = PAC*(std_o/std_p)
             prob = p1.sel(semanas=week)*0.01
             p_corr1 = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
@@ -355,9 +355,9 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             f3 = c_PAC + '/' + modelo + '/' + variable + '_stdp_semana' + str(week) + '_pctil50+.nc'
             # ################
             # para 50+
-            PAC = xr.open_dataset(f1)['PAC']
-            std_o = xr.open_dataset(f2)['std_o']
-            std_p = xr.open_dataset(f3)['std_p']
+            PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
+            std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
+            std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
             corr_factor = PAC*(std_o/std_p)
             prob = p2.sel(semanas=week)*0.01
             p_corr2 = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
