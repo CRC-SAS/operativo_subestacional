@@ -123,7 +123,8 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
         if validators.url(url_out):
             print('Descargando archivo', modelo, 'para la fecha:',fecha)
             with requests.get(url_out, stream=True) as r:
-                shutil.copyfileobj(r.raw, out_file)
+                with open(out_file, 'wb') as file_obj:
+                    shutil.copyfileobj(r.raw, file_obj)
         else:
             print("Invalid URL")
     
@@ -145,7 +146,8 @@ def descarga_pronostico_CFSv2(fecha, variable, out_folder):
             if validators.url(url_out):
                 print('Descargando archivo CFSv2 para la fecha:', fechai)
                 with requests.get(url_out, stream=True) as r:
-                   shutil.copyfileobj(r.raw, out_file)
+                    with open(out_file, 'wb') as file_obj:
+                        shutil.copyfileobj(r.raw, file_obj)
             else:
                 print("Invalid URL")
     out_files = sorted(glob.glob(out_folder + '*' + modelo + '*.nc'), reverse=True)
