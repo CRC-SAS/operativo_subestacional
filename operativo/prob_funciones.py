@@ -85,7 +85,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
         # Agregamos a la lista para luego concatenar
         lista_ds.append(fcst_selected)
 
-    ds = xr.concat(lista_ds, dim='M')
+    ds = xr.concat(lista_ds, dim='M', coords='different', compat='equals')
     ds.attrs['old_start_date'] = S_old
     fcst_new, fechas = grouping_coord_fecha(ds, miercoles, hcast=0)
     fechas_o = [dt.datetime(a.year, a.month, a.day ).replace(year=1960).replace(hour=0) for a in fechas]
@@ -148,7 +148,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     media1 = media1.drop('S')
     media1 = media1.rename({'time':'S'})
     #
-    media = xr.concat([media0, media1], dim='S')
+    media = xr.concat([media0, media1], dim='S', coords='different', compat='equals')
     media = media[variable].sel(S=slice(f1, f2))
     if ({'logitude', 'latitude'}).issubset(media.dims):
         media = media.rename({'longitude': 'X','latitude': 'Y'})
@@ -201,7 +201,7 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     pctil2_i = pctil2_i.assign_coords(semanas=('S', np.array([3.,5.]))).swap_dims({'S':'semanas'})
 
     # concatenamos valores
-    pctil_i = xr.concat([pctil1_i, pctil2_i], 'semanas')
+    pctil_i = xr.concat([pctil1_i, pctil2_i], dim='semanas', coords='different', compat='equals')
     
     return pctil_i
 
@@ -263,9 +263,9 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
         aux_hcst.append(hcst_m)
         aux_media.append(media_m_i)
         aux_pctil.append(pctil_i)
-    media_f = xr.concat(aux_media, fcst_m.M)
-    pctil_f = xr.concat(aux_pctil, fcst_m.M)
-    hcst_f = xr.concat(aux_hcst, fcst_m.M)
+    media_f = xr.concat(aux_media, dim=fcst_m.M, coords='different', compat='equals')
+    pctil_f = xr.concat(aux_pctil, dim=fcst_m.M, coords='different', compat='equals')
+    hcst_f = xr.concat(aux_hcst, dim=fcst_m.M, coords='different', compat='equals')
 
     return fcst_m, hcst_f, media_f, pctil_f, fechas_v
 
@@ -327,7 +327,7 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             p_corr = 100.*p_corr
             p_corr = p_corr.rename('prob_corr')
             list_corr.append(p_corr)
-        p1_corr = xr.concat(list_corr, dim='semanas')
+        p1_corr = xr.concat(list_corr, dim='semanas', coords='different', compat='equals')
         return p1_corr, p1_corr
     else:
         "Hay datos en p2, ie el percentil es 50 y se calculan probabilidades por sobre y por debajo"
@@ -365,8 +365,8 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             p_corr2 = p_corr2.rename('prob_corr')
             list_corr1.append(p_corr1)
             list_corr2.append(p_corr2)
-        p1_corr = xr.concat(list_corr1, dim='semanas')
-        p2_corr = xr.concat(list_corr2, dim='semanas')
+        p1_corr = xr.concat(list_corr1, dim='semanas', coords='different', compat='equals')
+        p2_corr = xr.concat(list_corr2, dim='semanas', coords='different', compat='equals')
         return p1_corr, p2_corr
 
 
