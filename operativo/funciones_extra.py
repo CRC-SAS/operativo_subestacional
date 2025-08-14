@@ -17,6 +17,57 @@ from cartopy.io import shapereader
 from matplotlib import colors as c
 from cartopy.mpl.geoaxes import GeoAxes
 from typing import cast
+from calendar import Day
+
+
+VALID_DATE_FORMATS = ['%Y%m%d', '%Y-%m-%d', '%Y/%m/%d']
+
+
+def parse_date(date_str: str) -> dt.datetime:
+    for i, date_format in enumerate(VALID_DATE_FORMATS, start=1):
+        try:
+            parsed_date = dt.datetime.strptime(date_str, date_format)
+        except ValueError:
+            if i == len(VALID_DATE_FORMATS):
+                raise
+        else:
+            return parsed_date
+    return dt.datetime.now()
+
+
+def is_date_dayofweek(input_date: dt.date | dt.datetime, target_weekday: Day) -> bool:
+    """
+    Checks if the given date represents the target day of the week.
+
+    Args:
+        input_date (date or datetime): The date to be checked.
+        target_weekday (calendar.Day): An integer that represents the day of the week that acts as target weekday.
+
+    Returns:
+        bool: True if the date represents the target weekday, False otherwise.
+    """
+    return input_date.weekday() == target_weekday
+
+
+def get_date_for_weekday(start_date: dt.date | dt.datetime, target_weekday: Day) -> dt.datetime:
+    """
+    Calculates the nearest previous date for the given week_day, relative to a given start_date.
+
+    Args:
+        start_date (date, datetime): The date from which to calculate the nearest previous date.
+        target_weekday (calendar.Day): An integer that represents the day of the week that acts as target weekday.
+
+    Returns:
+        datetime: The datetime object representing the nearest previous date.
+    """
+    # Get the weekday number (Monday=0, ..., Wednesday=2, ..., Sunday=6)
+    current_weekday = start_date.weekday()
+    # Calculate the offset to reach the target weekday
+    offset = (current_weekday - target_weekday) % 7
+    # Subtract the calculated offset from the start_date
+    previous_date = start_date - dt.timedelta(days=offset)
+    # Return the nearest previous date
+    return previous_date
 
 
 def parse_config(file_path):
