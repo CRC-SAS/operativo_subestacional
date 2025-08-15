@@ -1,5 +1,4 @@
 
-import re
 import os
 import glob
 import requests
@@ -68,26 +67,6 @@ def get_date_for_weekday(start_date: dt.date | dt.datetime, target_weekday: Day)
     previous_date = start_date - dt.timedelta(days=offset)
     # Return the nearest previous date
     return previous_date
-
-
-def parse_config(file_path):
-    config = {}
-    with open(file_path, 'r') as file:
-        for line in file:
-            # Use regex to match the variable name and value
-            match = re.match(r'(\w+)\s*=\s*"(.*)"', line.strip())
-            if match:
-                config[match.group(1)] = match.group(2)
-    return config
-
-
-def str_to_bool(s):
-    if s == 'True':
-         return True
-    elif s == 'False':
-         return False
-    else:
-         raise ValueError
 
 
 def gen_url_download(fecha, variable='tas', tipo='forecast', conj='ECCC', modelo='GEPS8'):

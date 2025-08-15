@@ -124,8 +124,11 @@ RUN mkdir -p ${APP_DATA}
 
 # Create data folders
 RUN mkdir -p ${APP_DATA}/datos/clim/precip
+RUN mkdir -p ${APP_DATA}/datos/clim/rain
 RUN mkdir -p ${APP_DATA}/datos/clim/tmean
 RUN mkdir -p ${APP_DATA}/datos/hindcast
+RUN mkdir -p ${APP_DATA}/datos/operativo/forecast
+RUN mkdir -p ${APP_DATA}/datos/operativo/prob
 RUN mkdir -p ${APP_DATA}/datos/PAC/pr/CCSM4
 RUN mkdir -p ${APP_DATA}/datos/PAC/pr/CFSv2
 RUN mkdir -p ${APP_DATA}/datos/PAC/pr/GEFSv12_CPC
@@ -170,6 +173,8 @@ RUN chmod -R ug+rw,o+r,o-w ${APP_HOME}
 # Set read-only environment variables
 ENV APP_HOME=${APP_HOME}
 ENV APP_DATA=${APP_DATA}
+ENV CARPETA_DATOS=${APP_DATA}/datos/
+ENV CARPETA_FIGURAS=${APP_DATA}/figuras/operativo/
 
 
 

@@ -4,9 +4,13 @@ import argparse
 import datetime as dt
 import pandas as pd
 
+from calendar import Day
+from pathlib import Path
+
 from funciones_extra import descarga_pronostico, mapa_probabilidad
 from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_extr
-from funciones_extra import parse_config, parse_date, str_to_bool
+from funciones_extra import get_date_for_weekday, parse_date
+from setup.config import  GlobalConfig
 
 
 def nearest(items, pivot):
@@ -25,33 +29,32 @@ parser.add_argument('variable', type=str, help='Variable to calibrate (pr or tas
 parser.add_argument('--no-plot', dest= 'plot_maps', action='store_false', help='Don\'t generate built-in plots')
 args = parser.parse_args()
 
-# Archivo con carpetas
-config_file = 'datos_entrada.txt'
-# Leemos el archivo
-config = parse_config(config_file)
-carpeta = config.get('carpeta_datos')
-carpeta_dato = carpeta + 'operativo/'
-carpeta_figuras = config.get('carpeta_figuras') + args.variable + '/'
-corregir = str_to_bool(config.get('corregir'))
+# Leer archivo de configuración
+config = GlobalConfig.Instance().app_config
+# Definir variables a ser utilizadas
+carpeta_datos = Path(f'{config.carpeta_datos}/operativo/').as_posix()
+carpeta_figuras = Path(f'{config.carpeta_figuras}/{args.variable}/').as_posix()
+corregir = config.corregir
 
-# leer fechas correspondientes a GMAO
-fechas_gmao = pd.read_csv('./fechas_gmao.csv', sep=';')
+# Leer fechas correspondientes a GMAO
+fechas_gmao = pd.DataFrame(config.fechas_gmao[1:], columns=config.fechas_gmao[0])
 
-nombre_var = {'pr': 'Acumulado semanal de lluvia', 
-              'tas': 'Temperatura media de la semana'}
 
 print('#####################################################')
 print('######## Elaboración de pronóstico operativo ########')
+print('#####################################################')
 print(f'######## Fecha inicio de pronóstico: {args.fecha}')
-print(f'######## Variable de pronóstico: {nombre_var[args.variable]}')
+print(f'######## Variable de pronóstico: {getattr(config.desc_variables, args.variable)}')
 print(f'######## Se elaboran figuras con pronóstico {'corregido' if corregir else 'SIN corregir'}')
+print('#####################################################')
 
 
 #####################
 # Descarga del dato #
 #####################
 
-miercoles = dt.datetime.strptime(args.fecha, '%Y%m%d')
+# Fecha 0 siempre es el miercoles guía.
+miercoles = get_date_for_weekday(start_date=args.fecha, target_weekday=Day.WEDNESDAY)
 fechas_gmao['year'] = miercoles.year
 fechas_gmao['hour'] = miercoles.hour
 fechas_gmao['minute'] = miercoles.minute
@@ -66,7 +69,7 @@ tipo='forecast'
 conj='GMAO'
 modelo='GEOS_V2p1'
 
-out_folder = carpeta_dato + 'forecast/' + args.variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
+out_folder = carpeta_datos + '/forecast/' + args.variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
 os.makedirs(out_folder, exist_ok=True)
 out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
 
@@ -103,7 +106,7 @@ p1_20_final, p1_80_final = calc_prob_corr_extr(p1_20_corr, p1_80_corr)
 for percentil in ['20', '80']:
     fecha_str = fecha_d.strftime('%Y%m%d%H%M')
     fecha_mie = miercoles.strftime('%Y%m%d%H%M')
-    c_out = carpeta_dato + 'prob/' + args.variable + '/' + fecha_mie + '/' + percentil + '/'
+    c_out = carpeta_datos + '/prob/' + args.variable + '/' + fecha_mie + '/' + percentil + '/'
     n_archivo0 = c_out + args.variable + '_underpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
     n_archivo1 = c_out + args.variable + '_overpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
     print('######## Guardando los datos en:', c_out, '###')
@@ -123,7 +126,7 @@ for percentil in ['20', '80']:
 
 if args.plot_maps:
     for percentil in ['20', '80']:
-        c_out_f = carpeta_figuras + fecha_mie + '/' + percentil + '/'
+        c_out_f = carpeta_figuras + '/' + fecha_mie + '/' + percentil + '/'
         os.makedirs(c_out_f, exist_ok=True)
 
         print('######## Guardando las figuras en:', c_out_f, '###')

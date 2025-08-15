@@ -1,9 +1,11 @@
 
+.env
+
 *.pyc
 TODO.md
 
 /.idea/
 /.venv/
 
-/datos
-/figuras
+/datos/
+/figuras/

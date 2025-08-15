@@ -5,8 +5,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from pathlib import Path
+
 from funciones_extra import grouping_coord_fecha
-from funciones_extra import parse_config
+from setup.config import GlobalConfig
 
 
 def change_year(date):
@@ -208,34 +210,33 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
 
 def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
 
-    # Archivo con carpetas
-    config_file = 'datos_entrada.txt'
+    # Acceder a la configuración global
+    config = GlobalConfig.Instance().app_config
 
-    # Leemos el archivo
-    config = parse_config(config_file)
-    carpeta = config.get('carpeta_datos')
+    # Obtener carpeta de datos
+    carpeta = Path(config.carpeta_datos).as_posix()
 
     fecha_str = fecha.strftime('%Y%m%d%H%M')
     mierc_str = miercoles.strftime('%Y%m%d%H%M')
 
-    varn = {'tas':'tmean', 'tasmin':'tmin', 'tasmax':'tmax', 'pr':'precip', 'zg':'z200'}
+    varn = vars(config.mapeo_variables)  # para convertir SimpleNamespace a dict
 
     nf1 = variable +'_' + modelo + '_' + fecha_str + '_forecast.nc'
 
     ################################
     print('$$$$$$$$$$$$$$ DATOS UTILIZADOS $$$$$$$$$$$$$$$$$$$$$')
     if modelo == 'CFSv2':
-        a0 = carpeta + 'operativo/forecast/' + variable + '/' + mierc_str + '/'
+        a0 = carpeta + '/operativo/forecast/' + variable + '/' + mierc_str + '/'
         print('$$$$ Archivos pronosticos en:', a0)
         fcst_len = xr.open_dataset(glob.glob(a0+'*.nc')[0], engine='netcdf4', decode_timedelta=True).sizes['L']-1
     else:
-        a0 = carpeta + 'operativo/forecast/' + variable + '/' + mierc_str + '/' + nf1
+        a0 = carpeta + '/operativo/forecast/' + variable + '/' + mierc_str + '/' + nf1
         print('$$$$ Archivo pronostico:', a0)
         fcst_len = xr.open_dataset(a0, engine='netcdf4', decode_timedelta=True).sizes['L']-1
-    a1 = carpeta + 'hindcast/' + variable +'_' + modelo + '_datos.nc'
-    a2 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + 'ClimSmooth.nc'
-    a3 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + '_weeklymean_pctile' + str(pctil) + '_smooth.nc'
-    a4 = carpeta + 'clim/' + varn[variable] + '/' + varn[variable] + '_2weeklymean_pctile' + str(pctil) + '_smooth.nc'
+    a1 = carpeta + '/hindcast/' + variable +'_' + modelo + '_datos.nc'
+    a2 = carpeta + '/clim/' + varn[variable] + '/' + varn[variable] + 'ClimSmooth.nc'
+    a3 = carpeta + '/clim/' + varn[variable] + '/' + varn[variable] + '_weeklymean_pctile' + str(pctil) + '_smooth.nc'
+    a4 = carpeta + '/clim/' + varn[variable] + '/' + varn[variable] + '_2weeklymean_pctile' + str(pctil) + '_smooth.nc'
 
     ################################    
     print('$$$$ Archivo hindcast:', a1)
@@ -305,12 +306,9 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
         cp = 0.2
     else:
         cp = 0.5
-    # Archivo con carpetas
-    config_file = 'datos_entrada.txt'
-    # Leemos el archivo
-    config = parse_config(config_file)
-    carpeta = config.get('carpeta_datos')
-    c_PAC = carpeta + 'PAC/' + variable + '/'
+    # Obtener carpeta de datos
+    carpeta = Path(GlobalConfig.Instance().app_config.carpeta_datos).as_posix()
+    c_PAC = carpeta + '/PAC/' + variable + '/'
     if (percentil == '20') or (percentil == '80'):
         " Lista vacia para p2, ie el percentil es 20 o 80"
         list_corr = []

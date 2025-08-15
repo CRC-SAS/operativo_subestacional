@@ -1,10 +1,11 @@
-argparse
 cartopy
 matplotlib
 netcdf4
 numpy
 pandas
+python-dotenv
 requests
 scipy
 validators
 xarray
+pyyaml
