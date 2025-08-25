@@ -109,7 +109,7 @@ for percentil in ['20', '80']:
 
 if args.plot_maps:
     for percentil in ['20', '80']:
-        c_out_f = carpeta_figuras + '/' + fecha_str + '/' + percentil + '/'
+        c_out_f = carpeta_figuras + '/' + fecha_mie + '/' + percentil + '/'
         os.makedirs(c_out_f, exist_ok=True)
 
         print('######## Guardando las figuras en:', c_out_f, '###')
