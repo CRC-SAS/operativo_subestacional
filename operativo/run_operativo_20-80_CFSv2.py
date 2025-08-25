@@ -18,9 +18,9 @@ from setup.config import  GlobalConfig
 
 # Defines parser data
 parser = argparse.ArgumentParser(description='Calibrates sub-stational CFSv2 forecasts.')
-parser.add_argument('fecha', type=parse_date, help='Date to calibrate')
-parser.add_argument('variable', type=str, help='Variable to calibrate (pr or tas)')
-parser.add_argument('--no-plot', dest= 'plot_maps', action='store_false', help='Don\'t generate built-in plots')
+parser.add_argument('fecha', type=parse_date, help='Date to be calibrated')
+parser.add_argument('variable', type=str, choices=['pr', 'tas'], help='Variable to be calibrated (pr or tas)')
+parser.add_argument('--no-plot', dest='plot_maps', action='store_false', help='Don\'t generate built-in plots')
 args = parser.parse_args()
 
 # Leer archivo de configuración
