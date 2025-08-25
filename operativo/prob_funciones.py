@@ -1,4 +1,5 @@
 
+import os
 import glob
 import datetime as dt
 import numpy as np
@@ -215,7 +216,7 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     config = GlobalConfig.Instance().app_config
 
     # Obtener carpeta de datos
-    carpeta = Path(config.carpeta_datos).as_posix()
+    carpeta = os.fspath(Path(config.carpeta_datos))
 
     fecha_str = fecha.strftime('%Y%m%d%H%M')
     mierc_str = miercoles.strftime('%Y%m%d%H%M')
@@ -308,7 +309,7 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
     else:
         cp = 0.5
     # Obtener carpeta de datos
-    carpeta = Path(GlobalConfig.Instance().app_config.carpeta_datos).as_posix()
+    carpeta = os.fspath(Path(GlobalConfig.Instance().app_config.carpeta_datos))
     c_PAC = carpeta + '/PAC/' + variable + '/'
     if (percentil == '20') or (percentil == '80'):
         " Lista vacia para p2, ie el percentil es 20 o 80"

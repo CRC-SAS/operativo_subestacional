@@ -26,8 +26,8 @@ args = parser.parse_args()
 # Leer archivo de configuración
 config = GlobalConfig.Instance().app_config
 # Definir variables a ser utilizadas
-carpeta_datos = Path(f'{config.carpeta_datos}/operativo/').as_posix()
-carpeta_figuras = Path(f'{config.carpeta_figuras}/{args.variable}/').as_posix()
+carpeta_datos = os.fspath(Path(f'{config.carpeta_datos}/operativo/'))
+carpeta_figuras = os.fspath(Path(f'{config.carpeta_figuras}/{args.variable}/'))
 corregir = config.corregir
 
 
