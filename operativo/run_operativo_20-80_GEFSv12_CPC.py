@@ -65,12 +65,12 @@ if os.stat(out_file).st_size > 10542000:
 #############################
 
 # Percentil 20
-fcst_m, hcst_f, media_f, pctil_f, fechas_v = get_data(fecha_d, 20, fecha_d, args.variable, modelo)
+fcst_m, hcst_f, media_f, pctil_f, fechas_v = get_data(fecha_d, 20, miercoles, args.variable, modelo)
 p1, p2 = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(20))
 p1_20 = p1.sel(semanas=slice(1,3))
 
 # Percentil 80
-fcst_m, hcst_f, media_f, pctil_f, _ = get_data(fecha_d, 80, fecha_d, args.variable, modelo)
+fcst_m, hcst_f, media_f, pctil_f, _ = get_data(fecha_d, 80, miercoles, args.variable, modelo)
 p1, _ = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(80))
 p1_80 = p1.sel(semanas=slice(1,3))
 
