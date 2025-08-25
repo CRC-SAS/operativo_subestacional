@@ -18,6 +18,8 @@ from cartopy.mpl.geoaxes import GeoAxes
 from typing import cast
 from calendar import Day
 
+from setup.config import GlobalConfig
+
 
 VALID_DATE_FORMATS = ['%Y%m%d', '%Y-%m-%d', '%Y/%m/%d']
 
@@ -397,3 +399,34 @@ def mapa_chequeo(chequeo, f1, f2, nome_fig):
     ax.set_title(titulo, loc='left', fontsize=7)
     ax.set_title(titulof, loc='right', fontsize=7)
     plt.savefig(nome_fig, dpi=150, bbox_inches='tight')
+
+
+def nearest_item(items, pivot):
+    return min([i for i in items if i <= pivot], key=lambda x: abs(x - pivot))
+
+
+def get_nearest_gmao_date(fecha_guia: dt.datetime):
+
+    # Leer archivo de configuración
+    config = GlobalConfig.Instance().app_config
+
+    # Leer fechas correspondientes a GMAO
+    fechas_gmao_posibles = pd.DataFrame(config.fechas_gmao[1:], columns=config.fechas_gmao[0])
+
+    # Agregar año, hora y minuto a las fechas gmao
+    fechas_gmao_posibles['year'] = fecha_guia.year
+    fechas_gmao_posibles['hour'] = fecha_guia.hour
+    fechas_gmao_posibles['minute'] = fecha_guia.minute
+
+    # Definir columnas as er utilizadas
+    columnas = ['year', 'mes', 'dia', 'hour', 'minute']
+
+    # Extraer solo columnas a ser utilizadas
+    fechas_gmao_posibles = fechas_gmao_posibles[columnas]
+    fechas_gmao_posibles.columns = columnas
+
+    # Convertir columnas a fechas
+    fechas_gmao_completas = pd.to_datetime(fechas_gmao_posibles)
+
+    # Retornar fecha más cercana a la fecha guía
+    return nearest_item(fechas_gmao_completas, fecha_guia)
