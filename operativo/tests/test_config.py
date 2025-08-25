@@ -14,10 +14,11 @@ class ItemTest(unittest.TestCase):
         self.assertIsNotNone(self.config.app_config)
 
     def test_log_level(self):
-        if getattr(self.config.app_config, 'log_levels', None) is not None:
+        if getattr(self.config.app_config, 'log_level', None) is not None:
             self.assertIn(self.config.app_config.log_level, ScriptControl.valid_log_levels)
 
     def test_mandatory_data(self):
+        self.assertIsNotNone(getattr(self.config.app_config, 'log_level', None))
         self.assertIsNotNone(getattr(self.config.app_config, 'carpeta_datos', None))
         self.assertIsNotNone(getattr(self.config.app_config, 'carpeta_figuras', None))
         self.assertIsNotNone(getattr(self.config.app_config, 'corregir', None))

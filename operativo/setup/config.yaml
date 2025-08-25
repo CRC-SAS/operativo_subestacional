@@ -1,4 +1,6 @@
 
+log_level: "INFO"
+
 carpeta_datos: "${CARPETA_DATOS}"
 carpeta_figuras: "${CARPETA_FIGURAS}"
 corregir: !!bool True
