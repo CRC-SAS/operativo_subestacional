@@ -10,7 +10,7 @@ ARG PYTHON_VERSION="3.13"
 ARG IMG_VARIANT="-slim"
 
 # Set APP installation folder
-ARG APP_HOME="/opt/pronos/scripts"
+ARG APP_HOME="/opt/pronos/operativo"
 
 # Set APP data folder
 ARG APP_DATA="/opt/pronos"
@@ -231,9 +231,9 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
-#   --workdir /opt/pronos/scripts \
+#   --workdir /opt/pronos/operativo \
 #   --tty --interactive prono-subestacional:latest \
-#   python /opt/pronos/scripts/run_operativo_20-80_GEPS8.py 20250101 pr
+#   python /opt/pronos/operativo/run_operativo_20-80_GEPS8.py 20250101 pr
 
 # CONSTRUIR IMAGEN (NON-ROOT)
 # docker build \
@@ -249,9 +249,9 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) \
-#   --workdir /opt/pronos/scripts \
+#   --workdir /opt/pronos/operativo \
 #   --tty --interactive prono-subestacional:nonroot \
-#   python /opt/pronos/scripts/run_operativo_20-80_GEPS8.py 20250101 pr
+#   python /opt/pronos/operativo/run_operativo_20-80_GEPS8.py 20250101 pr
 
 # CORRER OPERATIVAMENTE
 # docker run --rm \
@@ -259,5 +259,5 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) \
-#   --workdir /opt/pronos/scripts \
+#   --workdir /opt/pronos/operativo \
 #   --detach prono-subestacional:nonroot

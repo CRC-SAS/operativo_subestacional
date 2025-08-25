@@ -8,7 +8,7 @@
 ARG BASE_IMAGE="prono-subestacional:latest"
 
 # Set the source code folder
-ARG USR_DIRS="/opt/pronos/scripts /opt/pronos/datos /opt/pronos/figuras"
+ARG USR_DIRS="/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras"
 
 # Set user name and id
 ARG USR_NAME="nonroot"
