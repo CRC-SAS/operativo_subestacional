@@ -39,6 +39,7 @@ def get_prono_data(archivo, variable, miercoles):
 
     return fcst_m, fechas_o, fechas_v
 
+
 def get_prono_data_CFS(a0, variable, miercoles):
 
     archivos = sorted(glob.glob(a0 + '*CFSv2*.nc'), reverse=True)
@@ -446,4 +447,3 @@ def calc_prob_corr_extr(p1, p2):
     p1_o = p1_o.where(p1_o <= 100, 99)
 
     return p1_o, p2_o
-
