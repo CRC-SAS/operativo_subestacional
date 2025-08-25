@@ -4,8 +4,9 @@ netcdf4
 numpy
 pandas
 python-dotenv
+pyyaml
+redis[hiredis]
 requests
 scipy
 validators
 xarray
-pyyaml

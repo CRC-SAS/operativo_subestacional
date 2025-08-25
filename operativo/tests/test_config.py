@@ -2,7 +2,7 @@
 import unittest
 
 from setup.config import GlobalConfig
-from script import ScriptControl
+from controllers.script import ScriptControl
 
 
 class ItemTest(unittest.TestCase):
