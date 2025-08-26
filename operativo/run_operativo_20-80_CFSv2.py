@@ -54,7 +54,7 @@ modelo='CFSv2'
 
 out_folder = carpeta_datos + '/forecast/' + args.variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
 os.makedirs(out_folder, exist_ok=True)
-out_files = descarga_pronostico_CFSv2(fecha_d, args.variable,  out_folder)
+out_files = descarga_pronostico_CFSv2(fecha_d, args.variable,  tipo, conj, modelo, out_folder)
 
 if len(out_files) > 1:
     print('Trabajando con los archivos:', out_files)

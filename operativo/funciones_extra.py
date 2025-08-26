@@ -99,39 +99,40 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
     url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
     out_file = out_folder + variable + '_' + modelo + '_' + fecha.strftime('%Y%m%d%H%M') + '_forecast.nc'
     if os.path.isfile(out_file):
-        logging.info('El archivo ya esta descargado y disponible')
+        logging.info(f'######## El archivo {modelo} para la fecha: {fecha} ya esta descargado y disponible')
     else:
-        logging.info(f'Descargando archivo y guardando en: {out_file}')
+        logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
         if validators.url(url_out):
-            logging.info(f'Descargando archivo {modelo} para la fecha: {fecha}')
+            logging.info(f'######## - Guardando archivo en: {out_file}')
             with requests.get(url_out, stream=True) as r:
                 with open(out_file, 'wb') as file_obj:
                     shutil.copyfileobj(r.raw, file_obj)
         else:
-            logging.error('Invalid URL')
+            logging.error('######## - URL inválida!!')
+    logging.info('#####################################################')
     
     return out_file
 
 
-def descarga_pronostico_CFSv2(fecha, variable, out_folder):
-
-    tipo = 'forecast'
-    conj = 'NCEP'
-    modelo = 'CFSv2'
+def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder):
 
     for fechai in [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]:
         url_out = gen_url_download(fechai, variable, tipo, conj, modelo)
         out_file = out_folder + variable + '_' + modelo + '_' + fechai.strftime('%Y%m%d%H%M') + '_forecast.nc'
         if os.path.isfile(out_file):
+            logging.info(f'######## El archivo {modelo} para la fecha: {fechai} ya esta descargado y disponible')
             continue
         else:
+            logging.info(f'######## Descargando archivo {modelo} para la fecha: {fechai}')
             if validators.url(url_out):
-                logging.info(f'Descargando archivo CFSv2 para la fecha: {fechai}')
+                logging.info(f'######## - Guardando archivo en: {out_file}')
                 with requests.get(url_out, stream=True) as r:
                     with open(out_file, 'wb') as file_obj:
                         shutil.copyfileobj(r.raw, file_obj)
             else:
-                logging.error('Invalid URL')
+                logging.error('######## - URL inválida!!')
+    logging.info('#####################################################')
+
     out_files = sorted(glob.glob(out_folder + '*' + modelo + '*.nc'), reverse=True)
     
     return out_files

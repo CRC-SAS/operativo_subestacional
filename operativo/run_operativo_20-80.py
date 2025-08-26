@@ -102,17 +102,9 @@ if __name__ == '__main__':
 
     match args.modelo:
         case 'NCEP-CFSv2':
-            out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, out_folder)
-            if len(out_files) > 1:
-                logging.info(f'Trabajando con los archivos: {out_files}')
-        case 'GMAO-GEOS_V2p1':
-            out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
-            if os.stat(out_file).st_size > 1801900:
-                logging.info(f'Trabajando con el archivo: {out_file}')
+            out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, tipo, conj, modelo, out_folder)
         case _:  # Default case
             out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
-            if os.stat(out_file).st_size > 10542000:
-                logging.info(f'Trabajando con el archivo: {out_file}')
 
 
     #############################
