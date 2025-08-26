@@ -87,6 +87,8 @@ RUN apt-get -y -qq update && \
         htop procps \
         # to allow edit files
         vim \
+        # to save scripts PID
+        redis-tools \
         # to run process with cron
         cron && \
     rm -rf /var/lib/apt/lists/*
@@ -141,22 +143,28 @@ RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEOS_V2p1
 RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEPS8
 RUN mkdir -p ${APP_DATA}/figuras/operativo
 
-# Crear archivo datos_entrada.txt
+# Crear archivo que permite acceder a las variables de entorno desde cron
 RUN printf "\n\
-carpeta_datos = \"${APP_DATA}/datos/\" \n\
-carpeta_figuras = \"${APP_DATA}/figuras/operativo/\" \n\
-corregir = \"True\" \n\
-\n" > ${APP_HOME}/datos_entrada.txt
-RUN chmod a+rw ${APP_HOME}/datos_entrada.txt
+export \$(cat /proc/1/environ | tr '\0' '\n' | xargs -0 -I {} echo \"{}\") \n\
+\n" > ${APP_HOME}/load_envvars.sh
 
 # Crear archivo de configuración de CRON
 RUN printf "\n\
 SHELL=/bin/bash \n\
+BASH_ENV=${APP_HOME}/load_envvars.sh \n\
 \n\
 \043 Setup cron \n\
-* * * * *  /bin/echo 'Fecha y hora: \$(date)' >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+00 0 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py RSMAS-CCSM4 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+30 0 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py RSMAS-CCSM4 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+00 2 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py NCEP-CFSv2 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+30 2 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py NCEP-CFSv2 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+00 4 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py EMC-GEFSv12_CPC \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+30 4 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py EMC-GEFSv12_CPC \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+00 6 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py GMAO-GEOS_V2p1 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+30 6 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py GMAO-GEOS_V2p1 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+00 8 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
+30 8 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 \n" > ${APP_HOME}/crontab.txt
-RUN chmod a+rw ${APP_HOME}/crontab.txt
 
 # Save Git commit hash of this build into ${APP_HOME}/repo_version.
 # https://github.com/docker/hub-feedback/issues/600#issuecomment-475941394
@@ -173,8 +181,13 @@ RUN chmod -R ug+rw,o+r,o-w ${APP_HOME}
 # Set read-only environment variables
 ENV APP_HOME=${APP_HOME}
 ENV APP_DATA=${APP_DATA}
-ENV CARPETA_DATOS=${APP_DATA}/datos/
-ENV CARPETA_FIGURAS=${APP_DATA}/figuras/operativo/
+
+# Set changeable environment variables
+ENV CARPETA_DATOS=${APP_DATA}/datos
+ENV CARPETA_FIGURAS=${APP_DATA}/figuras/operativo
+
+# Declare optional environment variables
+ENV REDIS_HOST=""
 
 
 
@@ -207,7 +220,7 @@ RUN chmod -R a+rwx /home/.local /home/.cache /home/.config
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--" ]
 
 # Run your program under Tini (https://github.com/krallin/tini#using-tini)
-CMD [ "python", "--version" ]
+CMD [ "cron", "-fL", "15" ]
 # or docker run your-image /your/program ...
 
 # Set work directory
@@ -225,39 +238,26 @@ WORKDIR ${APP_HOME}
 #   --tag prono-subestacional:latest \
 #   --file Dockerfile .
 
-# CORRER MANUALMENTE
+# CORRER MANUALMENTE (CRONTAB)
+# docker run --rm \
+#   --name prono-subestacional-rm \
+#   --tty --interactive prono-subestacional:latest crontab -l
+
+# CORRER MANUALMENTE (CALIBRACIÓN - NO FUNCIONA SIN REDIS, POR PERMISOS DE ESCRITURA EN APP_HOME)
 # docker run --rm \
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
-#   --workdir /opt/pronos/operativo \
+#   --network my-redis-network --env REDIS_HOST=my-redis-container \
 #   --tty --interactive prono-subestacional:latest \
-#   python /opt/pronos/operativo/run_operativo_20-80_GEPS8.py 20250101 pr
+#   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
 
-# CONSTRUIR IMAGEN (NON-ROOT)
-# docker build \
-#   --tag prono-subestacional:nonroot \
-#   --build-arg BASE_IMAGE="prono-subestacional:latest" \
-#   --build-arg USER_UID=$(stat -c "%u" .) \
-#   --build-arg USER_GID=$(stat -c "%g" .) \
-#   --file Dockerfile.nonroot .
-
-# CORRER MANUALMENTE
+# CORRER OPERATIVAMENTE (CALIBRACIÓN - NO FUNCIONA SI NO SE CREA UN USUARIO)
 # docker run --rm \
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
-#   --workdir /opt/pronos/operativo \
-#   --tty --interactive prono-subestacional:nonroot \
-#   python /opt/pronos/operativo/run_operativo_20-80_GEPS8.py 20250101 pr
-
-# CORRER OPERATIVAMENTE
-# docker run --rm \
-#   --name prono-subestacional \
-#   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
-#   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
-#   --workdir /opt/pronos/operativo \
-#   --detach prono-subestacional:nonroot
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
+#   --network my-redis-network --env REDIS_HOST=my-redis-container \
+#   --detach prono-subestacional:latest

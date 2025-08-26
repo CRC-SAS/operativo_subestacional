@@ -99,3 +99,20 @@ RUN echo "${USR_NAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USR_NAME} && \
 #   --build-arg USER_UID=$(stat -c "%u" .) \
 #   --build-arg USER_GID=$(stat -c "%g" .) \
 #   --file Dockerfile.nonroot .
+
+# CORRER MANUALMENTE
+# docker run --rm \
+#   --name prono-subestacional \
+#   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
+#   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
+#   --tty --interactive nonroot-subestacional:latest \
+#   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
+
+# CORRER OPERATIVAMENTE
+# docker run --rm \
+#   --name prono-subestacional \
+#   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
+#   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
+#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
+#   --detach nonroot-subestacional:latest
