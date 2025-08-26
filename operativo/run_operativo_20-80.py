@@ -2,6 +2,7 @@
 import os
 import argparse
 import datetime as dt
+import logging
 
 from calendar import Day
 from pathlib import Path
@@ -49,13 +50,13 @@ if __name__ == '__main__':
     corregir = config.corregir
 
     # Reportar condiciones iniciales
-    print('#####################################################')
-    print('######## Elaboración de pronóstico operativo ########')
-    print('#####################################################')
-    print(f'######## Fecha inicio de pronóstico: {args.fecha}')
-    print(f'######## Variable de pronóstico: {getattr(config.desc_variables, args.variable)}')
-    print(f'######## Se elaboran figuras con pronóstico {'corregido' if corregir else 'SIN corregir'}')
-    print('#####################################################')
+    logging.info('#####################################################')
+    logging.info('######## Elaboración de pronóstico operativo ########')
+    logging.info('#####################################################')
+    logging.info(f'######## Fecha inicio de pronóstico: {args.fecha}')
+    logging.info(f'######## Variable de pronóstico: {getattr(config.desc_variables, args.variable)}')
+    logging.info(f'######## Se elaboran figuras con pronóstico {'corregido' if corregir else 'SIN corregir'}')
+    logging.info('#####################################################')
 
 
     #################################
@@ -103,15 +104,15 @@ if __name__ == '__main__':
         case 'NCEP-CFSv2':
             out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, out_folder)
             if len(out_files) > 1:
-                print('Trabajando con los archivos:', out_files)
+                logging.info(f'Trabajando con los archivos: {out_files}')
         case 'GMAO-GEOS_V2p1':
             out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
             if os.stat(out_file).st_size > 1801900:
-                print('Trabajando con el archivo:', out_file)
+                logging.info(f'Trabajando con el archivo: {out_file}')
         case _:  # Default case
             out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
             if os.stat(out_file).st_size > 10542000:
-                print('Trabajando con el archivo:', out_file)
+                logging.info(f'Trabajando con el archivo: {out_file}')
 
 
     #############################
@@ -146,7 +147,7 @@ if __name__ == '__main__':
         c_out = carpeta_datos + '/prob/' + args.variable + '/' + fecha_mie + '/' + percentil + '/'
         n_archivo0 = c_out + args.variable + '_underpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
         n_archivo1 = c_out + args.variable + '_overpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
-        print('######## Guardando los datos en:', c_out, '###')
+        logging.info(f'######## Guardando los datos en: {c_out} ###')
         os.makedirs(c_out, exist_ok=True)
         if percentil == '20':
             p1_20_final.to_netcdf(n_archivo0)
@@ -166,21 +167,21 @@ if __name__ == '__main__':
             c_out_f = carpeta_figuras + '/' + fecha_mie + '/' + percentil + '/'
             os.makedirs(c_out_f, exist_ok=True)
 
-            print('######## Guardando las figuras en:', c_out_f, '###')
+            logging.info(f'######## Guardando las figuras en: {c_out_f} ###')
             # Fechas
             f1s = fechas_v
             f2s = [fechas_v[0]+dt.timedelta(days=6), fechas_v[1]+dt.timedelta(days=6), fechas_v[2]+dt.timedelta(days=13)]
 
             for week, f1, f2 in zip([1,2,3], f1s, f2s):
-                print('######### Figura semana:', week)
+                logging.info(f'######### Figura semana: {week}')
                 if percentil == '20':
                     mapa_probabilidad(args.variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
                 elif percentil == '80':
                     mapa_probabilidad(args.variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
 
 
-    print('############ Fin de pronostico operativo ############')
-    print('#####################################################')
+    logging.info('############ Fin de pronostico operativo ############')
+    logging.info('#####################################################')
 
 
     ###############################

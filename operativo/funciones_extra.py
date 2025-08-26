@@ -7,6 +7,7 @@ import validators
 import numpy as np
 import pandas as pd
 import datetime as dt
+import logging
 
 import cartopy.crs as ccrs
 import cartopy.feature as cpf
@@ -98,16 +99,16 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
     url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
     out_file = out_folder + variable + '_' + modelo + '_' + fecha.strftime('%Y%m%d%H%M') + '_forecast.nc'
     if os.path.isfile(out_file):
-        print('El archivo ya esta descargado y disponible')
+        logging.info('El archivo ya esta descargado y disponible')
     else:
-        print('Descargando archivo y guardando en:', out_file)
+        logging.info(f'Descargando archivo y guardando en: {out_file}')
         if validators.url(url_out):
-            print('Descargando archivo', modelo, 'para la fecha:',fecha)
+            logging.info(f'Descargando archivo {modelo} para la fecha: {fecha}')
             with requests.get(url_out, stream=True) as r:
                 with open(out_file, 'wb') as file_obj:
                     shutil.copyfileobj(r.raw, file_obj)
         else:
-            print("Invalid URL")
+            logging.error('Invalid URL')
     
     return out_file
 
@@ -125,12 +126,12 @@ def descarga_pronostico_CFSv2(fecha, variable, out_folder):
             continue
         else:
             if validators.url(url_out):
-                print('Descargando archivo CFSv2 para la fecha:', fechai)
+                logging.info(f'Descargando archivo CFSv2 para la fecha: {fechai}')
                 with requests.get(url_out, stream=True) as r:
                     with open(out_file, 'wb') as file_obj:
                         shutil.copyfileobj(r.raw, file_obj)
             else:
-                print("Invalid URL")
+                logging.error('Invalid URL')
     out_files = sorted(glob.glob(out_folder + '*' + modelo + '*.nc'), reverse=True)
     
     return out_files

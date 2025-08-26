@@ -5,6 +5,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 import xarray as xr
+import logging
 
 from pathlib import Path
 
@@ -60,7 +61,7 @@ def get_prono_data_CFS(a0, variable, miercoles):
             fcst = fcst[variable]
         target_date_pd = pd.to_datetime(miercoles)
         if fcst.isnull().all():
-            print('Son todos nulos')
+            logging.warning('Son todos nulos')
         start_date = pd.to_datetime(fcst.S.values[0])
         S_old.append(start_date)
         dates = [(start_date + td).replace(hour=0) for td in fcst.L.values]
@@ -113,7 +114,7 @@ def get_hindcast_data(archivo, variable, fecha, miercoles):
 
     # seleccionar los datos a partir de inicio de pronóstico
     if hcst.S.dt.year[0] != 1960:
-        print('fechas distintas a 1960')
+        logging.info('fechas distintas a 1960')
         hcst['S'] = xr.apply_ufunc(change_year, hcst['S'], vectorize=True)  # Ensures the function is applied element-wise
 
     mes = fecha.month
@@ -226,14 +227,14 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     nf1 = variable +'_' + modelo + '_' + fecha_str + '_forecast.nc'
 
     ################################
-    print('$$$$$$$$$$$$$$ DATOS UTILIZADOS $$$$$$$$$$$$$$$$$$$$$')
+    logging.info('$$$$$$$$$$$$$$ DATOS UTILIZADOS $$$$$$$$$$$$$$$$$$$$$')
     if modelo == 'CFSv2':
         a0 = carpeta + '/operativo/forecast/' + variable + '/' + mierc_str + '/'
-        print('$$$$ Archivos pronosticos en:', a0)
+        logging.info(f'$$$$ Archivos pronósticos en: {a0}')
         fcst_len = xr.open_dataset(glob.glob(a0+'*.nc')[0], engine='netcdf4', decode_timedelta=True).sizes['L']-1
     else:
         a0 = carpeta + '/operativo/forecast/' + variable + '/' + mierc_str + '/' + nf1
-        print('$$$$ Archivo pronostico:', a0)
+        logging.info(f'$$$$ Archivo pronóstico: {a0}')
         fcst_len = xr.open_dataset(a0, engine='netcdf4', decode_timedelta=True).sizes['L']-1
     a1 = carpeta + '/hindcast/' + variable +'_' + modelo + '_datos.nc'
     a2 = carpeta + '/clim/' + varn[variable] + '/' + varn[variable] + 'ClimSmooth.nc'
@@ -241,11 +242,11 @@ def get_data(fecha, pctil, miercoles, variable='tas', modelo='GEOS_V2p1'):
     a4 = carpeta + '/clim/' + varn[variable] + '/' + varn[variable] + '_2weeklymean_pctile' + str(pctil) + '_smooth.nc'
 
     ################################    
-    print('$$$$ Archivo hindcast:', a1)
-    print('$$$$ Archivo diario historico:', a2)
-    print('$$$$ Archivo percentil 1 semana:', a3)
-    print('$$$$ Archivo percentil 2 semana:', a4)
-    print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+    logging.info(f'$$$$ Archivo hindcast: {a1}')
+    logging.info(f'$$$$ Archivo diario histórico: {a2}')
+    logging.info(f'$$$$ Archivo percentil 1 semana: {a3}')
+    logging.info(f'$$$$ Archivo percentil 2 semana: {a4}')
+    logging.info('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
 
     if modelo == 'CFSv2':
         fcst_m, fechas_o, fechas_v = get_prono_data_CFS(a0, variable, miercoles)
