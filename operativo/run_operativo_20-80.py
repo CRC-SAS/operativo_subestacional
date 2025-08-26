@@ -173,13 +173,14 @@ if __name__ == '__main__':
             f2s = [fechas_v[0]+dt.timedelta(days=6), fechas_v[1]+dt.timedelta(days=6), fechas_v[2]+dt.timedelta(days=13)]
 
             for week, f1, f2 in zip([1,2,3], f1s, f2s):
-                logging.info(f'######### Figura semana: {week}')
+                logging.info(f'######## - Figura semana: {week}')
                 if percentil == '20':
                     mapa_probabilidad(args.variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
                 elif percentil == '80':
                     mapa_probabilidad(args.variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
 
 
+    logging.info('#####################################################')
     logging.info('############ Fin de pronostico operativo ############')
     logging.info('#####################################################')
 
