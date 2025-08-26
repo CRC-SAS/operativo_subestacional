@@ -33,13 +33,24 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
 
+    # Catch and parse command-line arguments
+    args: argparse.Namespace = parse_args()
+
+
+    #################################
+    # Inicializar script de control #
+    #################################
+
+    # Create script control
+    script = ScriptControl(f'operational--{args.modelo}')
+
+    # Start script execution
+    script.start_script()
+
 
     ###############################
     # Datos iniciales para correr #
     ###############################
-
-    # Catch and parse command-line arguments
-    args: argparse.Namespace = parse_args()
 
     # Leer archivo de configuración
     config = GlobalConfig.Instance().app_config
@@ -57,17 +68,6 @@ if __name__ == '__main__':
     logging.info(f'######## Variable de pronóstico: {getattr(config.desc_variables, args.variable)}')
     logging.info(f'######## Se elaboran figuras con pronóstico {'corregido' if corregir else 'SIN corregir'}')
     logging.info('#####################################################')
-
-
-    #################################
-    # Inicializar script de control #
-    #################################
-
-    # Create script control
-    script = ScriptControl(f'operational--{args.modelo}')
-
-    # Start script execution
-    script.start_script()
 
 
     #####################
