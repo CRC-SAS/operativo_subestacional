@@ -124,7 +124,7 @@ class ScriptControl(object):
         log_level_int = logging.getLevelName(self.log_level)
         logging.basicConfig(format='%(asctime)s -- %(levelname)4s -- %(message)s',
                             datefmt='%Y/%m/%d %I:%M:%S %p', level=log_level_int)
-        logging.getLogger('rasterio').setLevel(logging.ERROR)
+        logging.getLogger('cartopy').setLevel(logging.ERROR)
 
     def start_script(self):
         # Abort if an instance is already running (when needed)
