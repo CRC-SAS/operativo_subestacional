@@ -1,12 +1,14 @@
 
 import os
 import logging
+import warnings
 
 from abc import ABC, abstractmethod
 from pathlib import Path
 from redis import Redis
 from redis.exceptions import RedisError
 from typing import Union
+from cartopy.io import DownloadWarning
 
 from setup.config import GlobalConfig
 
@@ -124,7 +126,8 @@ class ScriptControl(object):
         log_level_int = logging.getLevelName(self.log_level)
         logging.basicConfig(format='%(asctime)s -- %(levelname)4s -- %(message)s',
                             datefmt='%Y/%m/%d %I:%M:%S %p', level=log_level_int)
-        logging.getLogger('cartopy').setLevel(logging.ERROR)
+        logging.getLogger('cartopy.io').setLevel(logging.ERROR)
+        warnings.simplefilter("ignore", category=DownloadWarning)
 
     def start_script(self):
         # Abort if an instance is already running (when needed)
