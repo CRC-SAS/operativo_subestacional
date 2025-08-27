@@ -143,15 +143,15 @@ RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEOS_V2p1
 RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEPS8
 RUN mkdir -p ${APP_DATA}/figuras/operativo
 
-# Crear archivo que permite acceder a las variables de entorno desde cron
+# Create script to load environment variables
 RUN printf "\n\
 export \$(cat /proc/1/environ | tr '\0' '\n' | xargs -0 -I {} echo \"{}\") \n\
-\n" > ${APP_HOME}/load_envvars.sh
+\n" > ${APP_HOME}/load-envvars.sh
 
-# Crear archivo de configuración de CRON
+# Create CRON configuration file
 RUN printf "\n\
 SHELL=/bin/bash \n\
-BASH_ENV=${APP_HOME}/load_envvars.sh \n\
+BASH_ENV=${APP_HOME}/load-envvars.sh \n\
 \n\
 \043 Setup cron \n\
 00 0 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py RSMAS-CCSM4 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
@@ -164,7 +164,19 @@ BASH_ENV=${APP_HOME}/load_envvars.sh \n\
 30 6 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py GMAO-GEOS_V2p1 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 00 8 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 30 8 * * 3  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
-\n" > ${APP_HOME}/crontab.txt
+\n" > ${APP_HOME}/crontab.conf
+
+# Create script to check container health
+RUN printf "#!/bin/bash \n\
+if [ \$(find ${APP_HOME} -type f -name '*.pid' 2>/dev/null | wc -l) != 0 ] || \n\
+   [ \$(echo 'KEYS *' | redis-cli -h \${REDIS_HOST} 2>/dev/null | grep -c cdi) != 0 ] && \n\
+   [ \$(ps -ef | grep -v 'grep' | grep -c 'python') == 0 ] \n\
+then \n\
+  exit 1 \n\
+else \n\
+  exit 0 \n\
+fi \n\
+\n" > ${APP_HOME}/check-healthy.sh
 
 # Save Git commit hash of this build into ${APP_HOME}/repo_version.
 # https://github.com/docker/hub-feedback/issues/600#issuecomment-475941394
@@ -177,6 +189,8 @@ RUN export head=$(cat /tmp/git/HEAD | cut -d' ' -f2) && \
 
 # Set permissions of app files
 RUN chmod -R ug+rw,o+r,o-w ${APP_HOME}
+RUN chmod a+x ${APP_HOME}/load-envvars.sh
+RUN chmod a+x ${APP_HOME}/check-healthy.sh
 
 # Set read-only environment variables
 ENV APP_HOME=${APP_HOME}
@@ -187,7 +201,7 @@ ENV CARPETA_DATOS=${APP_DATA}/datos
 ENV CARPETA_FIGURAS=${APP_DATA}/figuras/operativo
 
 # Declare optional environment variables
-ENV REDIS_HOST=""
+ENV REDIS_HOST=localhost
 
 
 
@@ -205,7 +219,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG APP_HOME
 
 # Setup CRON for root user
-RUN (cat ${APP_HOME}/crontab.txt) | crontab -
+RUN (cat ${APP_HOME}/crontab.conf) | crontab -
 
 # Create standard directories used for specific types of user-specific data, as defined 
 # by the XDG Base Directory Specification. For when "docker run --user uid:gid" is used.
@@ -222,6 +236,9 @@ ENTRYPOINT [ "/usr/bin/tini", "-g", "--" ]
 # Run your program under Tini (https://github.com/krallin/tini#using-tini)
 CMD [ "cron", "-fL", "15" ]
 # or docker run your-image /your/program ...
+
+# Configurar verificación de la salud del contenedor
+HEALTHCHECK --interval=3s --timeout=3s --retries=3 CMD bash ${APP_HOME}/check-healthy.sh
 
 # Set work directory
 WORKDIR ${APP_HOME}
