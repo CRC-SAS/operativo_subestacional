@@ -25,7 +25,7 @@ ARG USER_PWD=$USR_NAME
 
 
 ###################################
-## Stage 6: Create non-root user ##
+## Stage 1: Create non-root user ##
 ###################################
 
 # Create image
