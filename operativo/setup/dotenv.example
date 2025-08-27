@@ -5,5 +5,5 @@ CARPETA_DATOS="d:/subseasonal_SISSA/datos/"
 CARPETA_FIGURAS="d:/subseasonal_SISSA/figuras/operativo/"
 
 # OBS:
-# To substitute/evaluate environment variables in docker-compose.yml,
+# To substitute/evaluate environment variables by using load_dotenv,
 # this file must be named .env, otherwise replacement will not work.
