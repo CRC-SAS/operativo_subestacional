@@ -73,6 +73,11 @@ RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count}
     && (cat $(find ${USR_DIRS} -type f -name 'crontab.conf')) | crontab -u ${USR_NAME} - \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
+# Remove job for root user
+RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
+    && crontab -u root -r \
+    || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
+
 # Modify the password of non-root user
 RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
 
