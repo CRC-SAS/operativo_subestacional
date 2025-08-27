@@ -7,7 +7,7 @@
 # Imagen en la que instalar Pycharm
 ARG BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0"
 
-# Set the source code folder
+# Folders whose owner needs to be changed
 ARG USR_DIRS="/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras"
 
 # Set user name and id
