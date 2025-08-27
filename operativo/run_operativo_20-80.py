@@ -57,9 +57,9 @@ if __name__ == '__main__':
     if not is_date_dayofweek(args.fecha, Day.FRIDAY):
         # Reportar la situación
         logging.error('El script se ejecutó un día diferente al viernes.')
-        # Detener la ejecución del script
+        # Detener script adecuadamente (gracefully)
         script.end_script_execution()
-        # Terminar ejecución del script
+        # Terminar ejecución
         raise SystemExit(0)
 
 
