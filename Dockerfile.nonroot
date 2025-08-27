@@ -5,7 +5,7 @@
 ##########################
 
 # Imagen en la que instalar Pycharm
-ARG BASE_IMAGE="prono-subestacional:latest"
+ARG BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0"
 
 # Set the source code folder
 ARG USR_DIRS="/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras"
@@ -91,7 +91,7 @@ RUN usermod -aG sudo ${USR_NAME} && \
 # CONSTRUIR IMAGEN (NON-ROOT)
 # docker build \
 #   --tag nonroot-subestacional:latest \
-#   --build-arg BASE_IMAGE="prono-subestacional:latest" \
+#   --build-arg BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0" \
 #   --build-arg USER_UID=$(stat -c "%u" .) \
 #   --build-arg USER_GID=$(stat -c "%g" .) \
 #   --file Dockerfile.nonroot .

@@ -252,13 +252,16 @@ WORKDIR ${APP_HOME}
 
 # CONSTRUIR IMAGEN (CORE)
 # docker build --pull \
-#   --tag prono-subestacional:latest \
+#   --tag ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0 \
 #   --file Dockerfile .
+
+# PUBLICAR IMAGEN (CORE)
+# docker push ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0
 
 # CORRER MANUALMENTE (CRONTAB)
 # docker run --rm \
 #   --name prono-subestacional-rm \
-#   --tty --interactive prono-subestacional:latest crontab -l
+#   --tty --interactive ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0 crontab -l
 
 # CORRER MANUALMENTE (CALIBRACIÓN - NO FUNCIONA SIN REDIS, POR PERMISOS DE ESCRITURA EN APP_HOME)
 # docker run --rm \
@@ -267,7 +270,7 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --tty --interactive prono-subestacional:latest \
+#   --tty --interactive ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0 \
 #   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
 
 # CORRER OPERATIVAMENTE (CALIBRACIÓN - NO FUNCIONA SI NO SE CREA UN USUARIO)
@@ -277,4 +280,4 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --detach prono-subestacional:latest
+#   --detach ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0

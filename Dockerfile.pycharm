@@ -85,7 +85,7 @@ CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
 # CONSTRUIR IMAGEN (PYCHARM CORE)
 # docker build \
 #   --tag pycharm-core:latest \
-#   --build-arg BASE_IMAGE="prono-subestacional:latest" \
+#   --build-arg BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0" \
 #   --file Dockerfile.pycharm .
 
 # CONSTRUIR IMAGEN (PYCHARM NON-ROOT)
