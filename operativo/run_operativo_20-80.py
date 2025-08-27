@@ -9,7 +9,7 @@ from pathlib import Path
 
 from funciones_extra import descarga_pronostico, descarga_pronostico_CFSv2
 from funciones_extra import get_date_for_weekday, parse_date, get_nearest_gmao_date
-from funciones_extra import mapa_probabilidad
+from funciones_extra import is_date_dayofweek, mapa_probabilidad
 from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_extr
 
 from setup.config import  GlobalConfig
@@ -48,9 +48,24 @@ if __name__ == '__main__':
     script.start_script()
 
 
-    ###############################
-    # Datos iniciales para correr #
-    ###############################
+    #####################
+    # Controles previos #
+    #####################
+
+    # Como la fecha guía es miércoles, pero el modelo ECCC-GEPS8 se publica los jueves, por lo tanto,
+    # el script solo puede ejecutarse los viernes. A continuación se verifica que esto se cumpla:
+    if not is_date_dayofweek(args.fecha, Day.FRIDAY):
+        # Reportar la situación
+        logging.error('El script se ejecutó un día diferente al viernes.')
+        # Detener la ejecución del script
+        script.end_script_execution()
+        # Terminar ejecución del script
+        raise SystemExit(0)
+
+
+    ###################
+    # Datos iniciales #
+    ###################
 
     # Leer archivo de configuración
     config = GlobalConfig.Instance().app_config
@@ -71,16 +86,16 @@ if __name__ == '__main__':
 
 
     #####################
-    # Descarga del dato #
+    # Descarga de datos #
     #####################
 
     # Fecha 0 siempre es el miércoles guía.
-    miercoles = get_date_for_weekday(start_date=args.fecha, target_weekday=Day.WEDNESDAY)  # ---> miércoles
+    miercoles = get_date_for_weekday(start_date=args.fecha, target_weekday=Day.WEDNESDAY)  # ---> miércoles previo
 
     # La fecha de publicación varía según el modelo
     match args.modelo:
         case 'RSMAS-CCSM4':
-            # CCSM4 tiene fecha de publicación el domingo, asi que se busca el domingo previo.
+            # CCSM4 se publica los domingos, asi que se busca el domingo previo al miércoles.
             fecha_d = get_date_for_weekday(start_date=miercoles, target_weekday=Day.SUNDAY)  # --> domingo previo
         case 'NCEP-CFSv2':
             fecha_d = miercoles
@@ -89,10 +104,10 @@ if __name__ == '__main__':
         case 'GMAO-GEOS_V2p1':
             fecha_d = get_nearest_gmao_date(miercoles)  # ---> fecha GMAO más cercana
         case 'ECCC-GEPS8':
-            # GEPS8 tiene fecha de publicación el jueves, asi que se busca el jueves previo.
-            fecha_d = get_date_for_weekday(start_date=miercoles, target_weekday=Day.THURSDAY)  # ---> jueves previo
+            # GEPS8 se publica los jueves, asi que se busca el jueves inmediatamente posterior al miércoles guía.
+            fecha_d = miercoles + dt.timedelta(days=1)  # --> jueves posterior a fecha guía
         case _:  # Default case
-            raise ValueError('Unknown Model')
+            raise ValueError('Se solicitó la calibración de un modelo desconocido!')
 
     tipo = 'forecast'
     conj, modelo = args.modelo.split('-')

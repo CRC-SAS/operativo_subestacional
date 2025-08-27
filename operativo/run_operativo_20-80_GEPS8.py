@@ -47,7 +47,7 @@ print('#####################################################')
 # Fecha 0 siempre es el miercoles guía.
 # GEPS9 tiene fecha de publicación el jueves, asi que se busca el jueves posterior.
 miercoles = get_date_for_weekday(start_date=args.fecha, target_weekday=Day.WEDNESDAY)  # ---> miércoles
-fecha_d = get_date_for_weekday(start_date=miercoles, target_weekday=Day.THURSDAY)  # ---> jueves
+fecha_d = miercoles + dt.timedelta(days=1)  # ---> jueves
 
 tipo='forecast'
 conj='ECCC'
