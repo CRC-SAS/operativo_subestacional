@@ -69,8 +69,8 @@ RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
 RUN chmod -R ug+rw,o+r ${USR_DIRS}
 
 # Setup cron
-RUN count=$(find ${USR_DIRS} -type f -name 'crontab.txt' | wc -l) && [ ${count} = 1 ] \
-    && (cat $(find ${USR_DIRS} -type f -name 'crontab.txt')) | crontab -u ${USR_NAME} - \
+RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
+    && (cat $(find ${USR_DIRS} -type f -name 'crontab.conf')) | crontab -u ${USR_NAME} - \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
 # Modify the password of non-root user
