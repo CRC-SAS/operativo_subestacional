@@ -86,6 +86,12 @@ RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
 RUN usermod -aG sudo ${USR_NAME} && \
     usermod -aG adm ${USR_NAME}
 
+# Access non-root user directory
+WORKDIR /home/${USR_NAME}
+
+# Switch to non-root user to avoid accidental container runs as root
+USER ${USR_NAME}
+
 
 
 #####################################################
@@ -106,7 +112,6 @@ RUN usermod -aG sudo ${USR_NAME} && \
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
 #   --tty --interactive nonroot-subestacional:latest \
 #   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
 
@@ -115,5 +120,4 @@ RUN usermod -aG sudo ${USR_NAME} && \
 #   --name prono-subestacional \
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) \
 #   --detach nonroot-subestacional:latest

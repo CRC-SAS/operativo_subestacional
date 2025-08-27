@@ -110,5 +110,5 @@ CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
 #   --env DISPLAY=$DISPLAY \
 #   --mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix \
 #   --mount type=bind,source=$(pwd),target=/opt/pronos \
-#   --user $(stat -c "%u" .):$(stat -c "%g" .) --workdir /opt/pronos \
+#   --workdir /opt/pronos \
 #   --tty --interactive pycharm-subestacional:latest 
