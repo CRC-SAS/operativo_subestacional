@@ -114,7 +114,7 @@ def get_hindcast_data(archivo, variable, fecha, miercoles):
 
     # seleccionar los datos a partir de inicio de pronóstico
     if hcst.S.dt.year[0] != 1960:
-        logging.info('fechas distintas a 1960')
+        logging.warning('######## fechas distintas a 1960')
         hcst['S'] = xr.apply_ufunc(change_year, hcst['S'], vectorize=True)  # Ensures the function is applied element-wise
 
     mes = fecha.month
