@@ -1,0 +1,22 @@
+# Copy this file to .env and replace variables with real values
+
+
+#
+# User UID and GID (to allow containers to edit files in host)
+#
+
+USER_UID=
+USER_GID=
+
+
+#
+# Subseasonal forecasts data volumes
+#
+
+PRONOS_SUBESTACIONALES_DATOS='pronos-subestacionales-datos-1'
+PRONOS_SUBESTACIONALES_FIGURAS='pronos-subestacionales-figuras-1'
+
+
+# OBS:
+# To substitute/evaluate environment variables in docker-compose.yml,
+# this file must be named .env, otherwise replacement will not work.

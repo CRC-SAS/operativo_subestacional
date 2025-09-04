@@ -1,0 +1,64 @@
+
+name: pronos-subestacionales
+
+services:
+
+  redis:
+    container_name: pronos-subestacionales-redis
+    image: redis:latest
+    networks:
+      - pronos-subestacionales-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    restart: unless-stopped
+
+  pronos:
+    image: pronos-subestacionales:latest
+    build:
+      context: ..
+      dockerfile: Dockerfile.nonroot
+      args:
+        - BASE_IMAGE=ghcr.io/crc-sas/operativo_subestacional:core-v1.0
+        - USR_DIRS=/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras
+        - USER_UID=${USER_UID}
+        - USER_GID=${USER_GID}
+    volumes:
+      - type: volume
+        source: pronos-subestacionales-datos
+        target: /opt/pronos/datos
+        read_only: false
+      - type: volume
+        source: pronos-subestacionales-figuras
+        target: /opt/pronos/figuras
+        read_only: false
+    environment:
+      - REDIS_HOST=pronos-subestacionales-redis
+    networks:
+      - pronos-subestacionales-network
+    depends_on:
+      - redis
+    deploy:
+      resources:
+        limits:
+          memory: 64G
+    restart: unless-stopped
+
+
+volumes:
+
+  pronos-subestacionales-datos:
+    name: ${PRONOS_SUBESTACIONALES_DATOS}
+    external: true
+
+  pronos-subestacionales-figuras:
+    name: ${PRONOS_SUBESTACIONALES_FIGURAS}
+    external: true
+
+
+networks:
+
+  pronos-subestacionales-network:
+    name: pronos-subestacionales-network
+    driver: bridge
