@@ -5,7 +5,7 @@
 ##########################
 
 # Imagen en la que instalar Pycharm
-ARG BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0"
+ARG BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v1.0"
 
 # Folders whose owner needs to be changed
 ARG USR_DIRS="/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras"
@@ -41,9 +41,9 @@ ARG ROOT_PWD
 ARG USER_PWD
 
 # Install OS packages
-RUN apt-get -y -qq update && \
-    apt-get -y -qq upgrade && \
-    apt-get -y -qq --no-install-recommends install \
+RUN apt-get --quiet --assume-yes update && \
+    apt-get --quiet --assume-yes upgrade && \
+    apt-get --quiet --assume-yes --no-install-recommends install \
         # to run sudo
         sudo && \
     rm -rf /var/lib/apt/lists/*
@@ -102,7 +102,7 @@ USER ${USR_NAME}
 # CONSTRUIR IMAGEN (NON-ROOT)
 # docker build \
 #   --tag nonroot-subestacional:latest \
-#   --build-arg BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0" \
+#   --build-arg BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v1.0" \
 #   --build-arg USER_UID=$(stat -c "%u" .) \
 #   --build-arg USER_GID=$(stat -c "%g" .) \
 #   --file Dockerfile.nonroot .

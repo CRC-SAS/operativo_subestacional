@@ -22,11 +22,26 @@ ARG PYCHARM_VERSION="2025.2"
 # Create image
 FROM ${BASE_IMAGE}
 
-# Update apt cache and install wget
-RUN apt-get -y -qq update && \
-    apt-get -y -qq upgrade && \
-    apt-get -y -qq --no-install-recommends install \
+# Update apt cache and install wget, curl and git
+RUN apt-get --quiet --assume-yes update && \
+    apt-get --quiet --assume-yes upgrade && \
+    apt-get --quiet --assume-yes install \
         curl wget git
+
+# Install packages required to run PyCharm IDE
+RUN apt-get --quiet --assume-yes --fix-missing install \
+        # Without these packages, PyCharm doesn't start
+        libxrender1 libxtst6 libxi6 libfreetype6 fontconfig \
+        # Without these packages, PyCharm starts, but reports that they are missing
+        libatk1.0-0 libatk-bridge2.0-0 libdrm-dev libxkbcommon-dev libdbus-1-3 \
+        libxcomposite1 libxdamage1 libxfixes3 libxrandr-dev libgbm1 libasound2 \
+        libcups2 libatspi2.0-0 libxshmfence1 \
+        # Without these packages, PyCharm starts, but shows errors when running
+        procps libsecret-1-0 gnome-keyring libxss1 libxext6 e2fsprogs \
+        libcanberra-gtk3-module libnss3 dbus-x11 x11-apps libglib2.0-bin \
+        # Without these packages, PyCharm starts, but Markdowns are not built
+        firefox-esr
+
 
 # Renew ARGs
 ARG PYCHARM_HOME
@@ -34,20 +49,6 @@ ARG PYCHARM_VERSION
 
 # Download Pycharm IDE
 RUN wget https://download.jetbrains.com/python/pycharm-community-${PYCHARM_VERSION}.tar.gz -P /tmp/
-
-# Install packages required to run PyCharm IDE
-RUN count=$(ls /tmp/pycharm-*.tar.gz | wc -l) && [ ${count} = 1 ] \
-    && apt-get -y -qq --no-install-recommends install \
-        # Without this packages, PyCharm don't start
-        libxrender1 libxtst6 libxi6 libfreetype6 fontconfig \
-        # Without this packages, PyCharm start, but reports that they are missing
-        libatk1.0-0 libatk-bridge2.0-0 libdrm-dev libxkbcommon-dev libdbus-1-3 \
-        libxcomposite1 libxdamage1 libxfixes3 libxrandr-dev libgbm1 libasound2 \
-        libcups2 libatspi2.0-0 libxshmfence1 \
-        # Without this packages, PyCharm start, but shows errors when running
-        procps libsecret-1-0 gnome-keyring libxss1 libxext6 firefox-esr \
-        #libnss3 libxext-dev libnspr4 \
-    || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
 # Install PyCharm IDE
 RUN count=$(ls /tmp/pycharm-*.tar.gz | wc -l) && [ ${count} = 1 ] \
@@ -65,8 +66,20 @@ RUN mkdir -p $(find /usr/local/lib -maxdepth 1 -type d -name 'python*')/dist-pac
 # Add Pycharm to the System PATH
 ENV PATH="${PYCHARM_HOME}/bin:${PATH}"
 
-# Run pycharm under Tini (https://github.com/krallin/tini#using-tini)
-CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
+# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- Default (X11)
+# CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
+# or docker run your-image /your/program ...
+
+# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- X11
+# CMD ["pycharm", "-Dide.browser.jcef.enabled=true", "-Dawt.toolkit.name=XToolkit"]
+# or docker run your-image /your/program ...
+
+# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- Wayland
+# CMD ["pycharm", "-Dide.browser.jcef.enabled=true", "-Dawt.toolkit.name=WLToolkit"]
+# or docker run your-image /your/program ...
+
+# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini)
+CMD ["pycharm", "--version"]
 # or docker run your-image /your/program ...
 
 
@@ -85,7 +98,7 @@ CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
 # CONSTRUIR IMAGEN (PYCHARM CORE)
 # docker build \
 #   --tag pycharm-core:latest \
-#   --build-arg BASE_IMAGE="ghcr.io/fmcarrasco/operativo_subestacional:core-v1.0" \
+#   --build-arg BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v1.0" \
 #   --file Dockerfile.pycharm .
 
 # CONSTRUIR IMAGEN (PYCHARM NON-ROOT)
@@ -104,11 +117,30 @@ CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
 # xhost +SI:localuser:"$(id -un)"
 
 
-# CORRER PYCHARM MANUALMENTE
+# CORRER PYCHARM MANUALMENTE (X11)
 # docker run --rm \
 #   --name pycharm-subestacional \
 #   --env DISPLAY=$DISPLAY \
-#   --mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix \
+#   --mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix,readonly \
+#   --mount type=bind,source=$XDG_RUNTIME_DIR/at-spi/bus,target=$XDG_RUNTIME_DIR/at-spi/bus,readonly \
+#   --privileged \
 #   --mount type=bind,source=$(pwd),target=/opt/pronos \
 #   --workdir /opt/pronos \
-#   --tty --interactive pycharm-subestacional:latest 
+#   --tty --interactive pycharm-subestacional:latest  \
+# pycharm -Dide.browser.jcef.enabled=true -Dawt.toolkit.name=XToolkit -Dide.browser.jcef.log.level=verbose
+
+# CORRER PYCHARM MANUALMENTE (Wayland)
+# docker run --rm \
+#   --name pycharm-subestacional \
+#   --env GDK_BACKEND=wayland --env QT_QPA_PLATFORM=wayland \
+#   --env WAYLAND_DISPLAY=$WAYLAND_DISPLAY --env XDG_RUNTIME_DIR=/tmp \
+#   --mount type=bind,source=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY,target=/tmp/$WAYLAND_DISPLAY,readonly \
+#   --mount type=bind,source=$XDG_RUNTIME_DIR/at-spi/bus,target=$XDG_RUNTIME_DIR/at-spi/bus,readonly \
+#   --mount type=bind,source=/run/dbus/system_bus_socket,target=/run/dbus/system_bus_socket,readonly \
+#   --env DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS \
+#   --mount type=bind,source=$XDG_RUNTIME_DIR/bus,target=$XDG_RUNTIME_DIR/bus,readonly \
+#   --privileged \
+#   --mount type=bind,source=$(pwd),target=/opt/pronos \
+#   --workdir /opt/pronos \
+#   --tty --interactive pycharm-subestacional:latest \
+# pycharm -Dide.browser.jcef.enabled=false -Dawt.toolkit.name=WLToolkit -Dide.browser.jcef.log.level=verbose
