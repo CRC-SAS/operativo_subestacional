@@ -155,7 +155,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     #
     media = xr.concat([media0, media1], dim='S', coords='different', compat='equals')
     media = media[variable].sel(S=slice(f1, f2))
-    if ({'logitude', 'latitude'}).issubset(media.dims):
+    if ({'longitude', 'latitude'}).issubset(media.dims):
         media = media.rename({'longitude': 'X','latitude': 'Y'})
     if ({'lon', 'lat'}).issubset(media.dims):
         media = media.rename({'lon': 'X','lat': 'Y'})
@@ -180,7 +180,7 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     # 1 valor para cada semana
     pctil1 = xr.open_dataset(archivo0, engine='netcdf4', decode_timedelta=True)
     pctil1 = pctil1[variable]
-    if ({'logitude', 'latitude'}).issubset(pctil1.dims):
+    if ({'longitude', 'latitude'}).issubset(pctil1.dims):
         pctil1 = pctil1.rename({'longitude': 'X','latitude': 'Y'})
     if ({'lon', 'lat'}).issubset(pctil1.dims):
         pctil1 = pctil1.rename({'lon': 'X','lat': 'Y'})
@@ -194,7 +194,7 @@ def get_pctil_data(archivo0, archivo1, variable, fechas_o, fechas_v, dato_o):
     # 1 valor para cada promedio de 2 semanas
     pctil2 = xr.open_dataset(archivo1, engine='netcdf4', decode_timedelta=True)
     pctil2 = pctil2[variable]
-    if ({'logitude', 'latitude'}).issubset(pctil2.dims):
+    if ({'longitude', 'latitude'}).issubset(pctil2.dims):
         pctil2 = pctil2.rename({'longitude': 'X','latitude': 'Y'})
     if ({'lon', 'lat'}).issubset(pctil2.dims):
         pctil2 = pctil2.rename({'lon': 'X','lat': 'Y'})
