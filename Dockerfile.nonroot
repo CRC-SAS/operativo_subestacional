@@ -64,6 +64,9 @@ RUN useradd --uid ${USER_UID} --gid ${USER_GID} --create-home \
     --gecos 'Non-root User' --no-log-init --shell /bin/bash \
     ${USR_NAME}
 
+# Modify the password of non-root user
+RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
+
 # Change the owner of the USR_DIRS folder
 RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
 
@@ -79,9 +82,6 @@ RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count}
 RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
     && crontab -u root -r \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
-
-# Modify the password of non-root user
-RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
 
 # Add non-root user to sudoers and to adm group
 # The adm group was added to allow non-root user to see logs
