@@ -51,16 +51,18 @@ RUN apt-get --quiet --assume-yes update && \
 # Modify root password
 RUN echo "root:${ROOT_PWD}" | chpasswd
 
-# Create a non-root user, so the container can run as non-root
-# OBS: the UID and GID must be the same as the user that own the
-# input and the output volumes, so there isn't perms problems!!
-# Se recomienda crear usuarios en el contendor de esta manera,
-# ver: https://nickjanetakis.com/blog/running-docker-containers-as-a-non-root-user-with-a-custom-uid-and-gid
-# Se agregar --no-log-init para prevenir un problema de seguridad,
-# ver: https://jtreminio.com/blog/running-docker-containers-as-current-host-user/
+# Create a non-root user, so that the container can run as non-root
+# OBS: the UID and GID must be the same as the user that owns the
+# input and output volumes, so there aren't permissions problems!!
+# Due to an unresolved bug in the Go, --no-log-init must be added:
+# See: https://docs.docker.com/build/building/best-practices/#user
+# Some guidelines followed were:
+# https://medium.com/@at.sreelekshmi/the-importance-of-using-adduser-in-docker-2acd66a9858b
+# https://medium.com/@abaqueiro/best-security-practices-for-building-apps-inside-containers-3158c533a2b0
 RUN groupadd --gid ${USER_GID} ${GRP_NAME}
-RUN useradd --no-log-init --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash \
-    --comment "Non-root User Account" --create-home ${USR_NAME}
+RUN useradd --uid ${USER_UID} --gid ${USER_GID} --create-home \
+    --gecos 'Non-root User' --no-log-init --shell /bin/bash \
+    ${USR_NAME}
 
 # Change the owner of the USR_DIRS folder
 RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
@@ -68,12 +70,12 @@ RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
 # Set permissions of files in USR_DIRS folder
 RUN chmod -R ug+rw,o+r ${USR_DIRS}
 
-# Setup cron
+# Setup cron (if necessary)
 RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
     && (cat $(find ${USR_DIRS} -type f -name 'crontab.conf')) | crontab -u ${USR_NAME} - \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
-# Remove job for root user
+# Remove job for root user (if necessary)
 RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
     && crontab -u root -r \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
@@ -85,6 +87,10 @@ RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
 # The adm group was added to allow non-root user to see logs
 RUN usermod -aG sudo ${USR_NAME} && \
     usermod -aG adm ${USR_NAME}
+
+# To allow sudo without password
+RUN echo "$USR_NAME ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USR_NAME} && \
+    chmod 0440 /etc/sudoers.d/${USR_NAME}
 
 # Access non-root user directory
 WORKDIR /home/${USR_NAME}
