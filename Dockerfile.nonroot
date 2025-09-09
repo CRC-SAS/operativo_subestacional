@@ -71,7 +71,7 @@ RUN echo "${USR_NAME}:${USER_PWD}" | chpasswd
 RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
 
 # Set permissions of files in USR_DIRS folder
-RUN chmod -R ug+rw,o+r ${USR_DIRS}
+RUN chmod -R u=rw,g=r,o=r ${USR_DIRS}
 
 # Setup cron (if necessary)
 RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
