@@ -68,12 +68,12 @@ RUN python3 -m pip install --upgrade pip && \
 
 
 
-###########################################
-## Stage 4: Install management packages  ##
-###########################################
+##########################################
+## Stage 3: Install management packages ##
+##########################################
 
 # Create image
-FROM py_core AS py_final
+FROM py_core AS base_image
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
@@ -93,6 +93,17 @@ RUN apt-get --quiet --assume-yes update && \
         cron && \
     rm -rf /var/lib/apt/lists/*
 
+# Create script to load environment variables
+RUN printf "\n\
+export \$(cat /proc/1/environ | tr '\0' '\n' | xargs -0 -I {} echo \"{}\") \n\
+\n" > /proc/1/load-envvars
+
+# Set minimal permissions to load-envvars script
+RUN chmod u=rx,g=x,o=x /proc/1/load-envvars
+
+# Setup load-envvars to allow it run as a non root user
+RUN chmod u+s /proc/1/load-envvars
+
 # Setup cron to allow it run as a non root user
 RUN chmod u+s $(which cron)
 
@@ -102,11 +113,11 @@ ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
 
 
 ####################################
-## Stage 3: Create APP core image ##
+## Stage 4: Create APP core image ##
 ####################################
 
 # Create image
-FROM py_final AS app_builder
+FROM base_image AS app_builder
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
@@ -143,15 +154,38 @@ RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEOS_V2p1
 RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEPS8
 RUN mkdir -p ${APP_DATA}/figuras/operativo
 
-# Create script to load environment variables
-RUN printf "\n\
-export \$(cat /proc/1/environ | tr '\0' '\n' | xargs -0 -I {} echo \"{}\") \n\
-\n" > ${APP_HOME}/load-envvars.sh
+# Save Git commit hash of this build into ${APP_HOME}/repo_version.
+# https://github.com/docker/hub-feedback/issues/600#issuecomment-475941394
+# https://docs.docker.com/build/building/context/#keep-git-directory
+COPY ./.git /tmp/git
+RUN export head=$(cat /tmp/git/HEAD | cut -d' ' -f2) && \
+    if echo "${head}" | grep -q "refs/heads"; then \
+    export hash=$(cat /tmp/git/${head}); else export hash=${head}; fi && \
+    echo "${hash}" > ${APP_HOME}/repo_version && rm -rf /tmp/git
+
+# Set minimum required file permissions
+RUN chmod -R u=rw,g=r,o=r ${APP_HOME}
+
+
+
+###################################
+## Stage 5: Setup APP core image ##
+###################################
+
+# Create image
+FROM app_builder AS app_core
+
+# Set environment variables
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Renew ARGs
+ARG APP_HOME
+ARG APP_DATA
 
 # Create CRON configuration file
 RUN printf "\n\
 SHELL=/bin/bash \n\
-BASH_ENV=${APP_HOME}/load-envvars.sh \n\
+BASH_ENV=/proc/1/load-envvars \n\
 \n\
 \043 Setup cron \n\
 00 0 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py RSMAS-CCSM4 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
@@ -165,6 +199,7 @@ BASH_ENV=${APP_HOME}/load-envvars.sh \n\
 00 8 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 30 8 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 \n" > ${APP_HOME}/crontab.conf
+RUN chmod u=rw,g=r,o=r ${APP_HOME}/crontab.conf
 
 # Create script to check container health
 RUN printf "#!/bin/bash \n\
@@ -177,26 +212,13 @@ else \n\
   exit 0 \n\
 fi \n\
 \n" > ${APP_HOME}/check-healthy.sh
-
-# Save Git commit hash of this build into ${APP_HOME}/repo_version.
-# https://github.com/docker/hub-feedback/issues/600#issuecomment-475941394
-# https://docs.docker.com/build/building/context/#keep-git-directory
-COPY ./.git /tmp/git
-RUN export head=$(cat /tmp/git/HEAD | cut -d' ' -f2) && \
-    if echo "${head}" | grep -q "refs/heads"; then \
-    export hash=$(cat /tmp/git/${head}); else export hash=${head}; fi && \
-    echo "${hash}" > ${APP_HOME}/repo_version && rm -rf /tmp/git
-
-# Set permissions of app files
-RUN chmod -R ug+rw,o+r,o-w ${APP_HOME}
-RUN chmod a+x ${APP_HOME}/load-envvars.sh
-RUN chmod a+x ${APP_HOME}/check-healthy.sh
+RUN chmod u=rwx,g=rx,o=rx ${APP_HOME}/check-healthy.sh
 
 # Set read-only environment variables
 ENV APP_HOME=${APP_HOME}
 ENV APP_DATA=${APP_DATA}
 
-# Set changeable environment variables
+# Set user-definable environment variables
 ENV CARPETA_DATOS=${APP_DATA}/datos
 ENV CARPETA_FIGURAS=${APP_DATA}/figuras/operativo
 
@@ -205,12 +227,12 @@ ENV REDIS_HOST=localhost
 
 
 
-####################################
-## Stage 4: Setup APP core image  ##
-####################################
+########################################
+## Stage 6: Setup CRC-SAS final image ##
+########################################
 
 # Create image
-FROM app_builder AS app-core
+FROM app_core AS app-root
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
