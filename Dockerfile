@@ -87,8 +87,6 @@ RUN apt-get --quiet --assume-yes update && \
         htop procps \
         # to allow edit files
         vim \
-        # to save scripts PID
-        redis-tools \
         # to run process with cron
         cron && \
     rm -rf /var/lib/apt/lists/*
@@ -121,6 +119,15 @@ FROM base_image AS app_builder
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
+
+# Install OS packages
+RUN apt-get -y -qq update && \
+    apt-get -y -qq upgrade && \
+    apt-get -y -qq --no-install-recommends install \
+        # to save scripts PID
+        # to check container health
+        redis-tools && \
+    rm -rf /var/lib/apt/lists/*
 
 # Renew ARGs
 ARG APP_HOME
