@@ -56,7 +56,7 @@ RUN python3 -m pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheel
 ###############################################
 
 # Create image
-FROM python:${PYTHON_VERSION}${IMG_VARIANT} AS py_core
+FROM python:${PYTHON_VERSION}${IMG_VARIANT} AS py_final
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
@@ -83,7 +83,7 @@ RUN python3 -m pip install --upgrade pip && \
 ##########################################
 
 # Create image
-FROM py_core AS base_image
+FROM py_final AS base_image
 
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
