@@ -122,7 +122,7 @@ exit 0 \n\
 \n" > /opt/utils/check-healthy
 
 # Set minimal permissions to the utils scripts
-RUN chmod --recursive u=rx,g=x,o=x /opt/utils
+RUN chmod --recursive u=rx,g=rx,o=rx /opt/utils
 
 # Allows utils scripts to run as a non-root user
 RUN chmod u+s /opt/utils/load-envvars
