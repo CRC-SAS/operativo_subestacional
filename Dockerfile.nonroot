@@ -10,6 +10,9 @@ ARG BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v1.0"
 # Folders whose owner needs to be changed
 ARG USR_DIRS="/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras"
 
+# Set crontab config filename
+ARG CRONTAB="crontab.conf"
+
 # Set user name and id
 ARG USR_NAME="nonroot"
 ARG USER_UID="1000"
@@ -33,6 +36,9 @@ FROM ${BASE_IMAGE}
 
 # Renew ARGs
 ARG USR_DIRS
+ARG CRONTAB
+
+# Renew ARGs
 ARG USR_NAME
 ARG USER_UID
 ARG GRP_NAME
@@ -74,12 +80,12 @@ RUN chown -R ${USR_NAME}:${GRP_NAME} ${USR_DIRS}
 RUN chmod -R u=rw,g=r,o=r ${USR_DIRS}
 
 # Setup cron (if necessary)
-RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
-    && (cat $(find ${USR_DIRS} -type f -name 'crontab.conf')) | crontab -u ${USR_NAME} - \
+RUN count=$(find ${USR_DIRS} -type f -name ${CRONTAB} | wc -l) && [ ${count} = 1 ] \
+    && (cat $(find ${USR_DIRS} -type f -name ${CRONTAB})) | crontab -u ${USR_NAME} - \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
 # Remove job for root user (if necessary)
-RUN count=$(find ${USR_DIRS} -type f -name 'crontab.conf' | wc -l) && [ ${count} = 1 ] \
+RUN count=$(find ${USR_DIRS} -type f -name ${CRONTAB} | wc -l) && [ ${count} = 1 ] \
     && crontab -u root -r \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 

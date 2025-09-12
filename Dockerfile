@@ -1,4 +1,5 @@
 
+
 ##########################
 ## Set GLOBAL arguments ##
 ##########################
@@ -60,6 +61,15 @@ FROM python:${PYTHON_VERSION}${IMG_VARIANT} AS py_core
 # Set environment variables
 ARG DEBIAN_FRONTEND=noninteractive
 
+# Set python environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install OS packages
+RUN apt-get --quiet --assume-yes update && \
+    apt-get --quiet --assume-yes upgrade && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install python dependencies from py_builder
 COPY --from=py_builder /usr/src/app/wheels /wheels
 RUN python3 -m pip install --upgrade pip && \
@@ -91,18 +101,33 @@ RUN apt-get --quiet --assume-yes update && \
         cron && \
     rm -rf /var/lib/apt/lists/*
 
+# Create utils directory
+RUN mkdir -p /opt/utils
+
 # Create script to load environment variables
-RUN printf "\n\
+RUN printf "#!/bin/bash \n\
 export \$(cat /proc/1/environ | tr '\0' '\n' | xargs -0 -I {} echo \"{}\") \n\
-\n" > /proc/1/load-envvars
+\n" > /opt/utils/load-envvars
 
-# Set minimal permissions to load-envvars script
-RUN chmod u=rx,g=x,o=x /proc/1/load-envvars
+# Create startup/entrypoint script
+RUN printf "#!/bin/bash \n\
+set -e \n\
+\043 https://docs.docker.com/reference/dockerfile/#entrypoint \n\
+exec \"\$@\" \n\
+\n" > /opt/utils/entrypoint
 
-# Setup load-envvars to allow it run as a non root user
-RUN chmod u+s /proc/1/load-envvars
+# Create script to check the container's health
+RUN printf "#!/bin/bash \n\
+exit 0 \n\
+\n" > /opt/utils/check-healthy
 
-# Setup cron to allow it run as a non root user
+# Set minimal permissions to the utils scripts
+RUN chmod --recursive u=rx,g=x,o=x /opt/utils
+
+# Allows utils scripts to run as a non-root user
+RUN chmod u+s /opt/utils/load-envvars
+
+# Setup cron to allow it to run as a non-root user
 RUN chmod u+s $(which cron)
 
 # Add Tini (https://github.com/krallin/tini#using-tini)
@@ -121,9 +146,8 @@ FROM base_image AS app_builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install OS packages
-RUN apt-get -y -qq update && \
-    apt-get -y -qq upgrade && \
-    apt-get -y -qq --no-install-recommends install \
+RUN apt-get --quiet --assume-yes update && \
+    apt-get --quiet --assume-yes --no-install-recommends install \
         # to save scripts PID
         # to check container health
         redis-tools && \
@@ -143,23 +167,23 @@ COPY ./operativo/ ${APP_HOME}
 RUN mkdir -p ${APP_DATA}
 
 # Create data folders
-RUN mkdir -p ${APP_DATA}/datos/clim/precip
-RUN mkdir -p ${APP_DATA}/datos/clim/rain
-RUN mkdir -p ${APP_DATA}/datos/clim/tmean
-RUN mkdir -p ${APP_DATA}/datos/hindcast
-RUN mkdir -p ${APP_DATA}/datos/operativo/forecast
-RUN mkdir -p ${APP_DATA}/datos/operativo/prob
-RUN mkdir -p ${APP_DATA}/datos/PAC/pr/CCSM4
-RUN mkdir -p ${APP_DATA}/datos/PAC/pr/CFSv2
-RUN mkdir -p ${APP_DATA}/datos/PAC/pr/GEFSv12_CPC
-RUN mkdir -p ${APP_DATA}/datos/PAC/pr/GEOS_V2p1
-RUN mkdir -p ${APP_DATA}/datos/PAC/pr/GEPS8
-RUN mkdir -p ${APP_DATA}/datos/PAC/tas/CCSM4
-RUN mkdir -p ${APP_DATA}/datos/PAC/tas/CFSv2
-RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEFSv12_CPC
-RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEOS_V2p1
-RUN mkdir -p ${APP_DATA}/datos/PAC/tas/GEPS8
-RUN mkdir -p ${APP_DATA}/figuras/operativo
+RUN mkdir -p ${APP_DATA}/datos/clim/precip \
+ && mkdir -p ${APP_DATA}/datos/clim/rain \
+ && mkdir -p ${APP_DATA}/datos/clim/tmean \
+ && mkdir -p ${APP_DATA}/datos/hindcast \
+ && mkdir -p ${APP_DATA}/datos/operativo/forecast \
+ && mkdir -p ${APP_DATA}/datos/operativo/prob \
+ && mkdir -p ${APP_DATA}/datos/PAC/pr/CCSM4 \
+ && mkdir -p ${APP_DATA}/datos/PAC/pr/CFSv2 \
+ && mkdir -p ${APP_DATA}/datos/PAC/pr/GEFSv12_CPC \
+ && mkdir -p ${APP_DATA}/datos/PAC/pr/GEOS_V2p1 \
+ && mkdir -p ${APP_DATA}/datos/PAC/pr/GEPS8 \
+ && mkdir -p ${APP_DATA}/datos/PAC/tas/CCSM4 \
+ && mkdir -p ${APP_DATA}/datos/PAC/tas/CFSv2 \
+ && mkdir -p ${APP_DATA}/datos/PAC/tas/GEFSv12_CPC \
+ && mkdir -p ${APP_DATA}/datos/PAC/tas/GEOS_V2p1 \
+ && mkdir -p ${APP_DATA}/datos/PAC/tas/GEPS8 \
+ && mkdir -p ${APP_DATA}/figuras/operativo
 
 # Save Git commit hash of this build into ${APP_HOME}/repo_version.
 # https://github.com/docker/hub-feedback/issues/600#issuecomment-475941394
@@ -171,7 +195,8 @@ RUN export head=$(cat /tmp/git/HEAD | cut -d' ' -f2) && \
     echo "${hash}" > ${APP_HOME}/repo_version && rm -rf /tmp/git
 
 # Set minimum required file permissions
-RUN chmod -R u=rw,g=r,o=r ${APP_HOME}
+RUN chmod -R u=rw,g=r,o=r ${APP_HOME} \
+ && chmod -R u=rw,g=r,o=r ${APP_DATA}
 
 
 
@@ -192,7 +217,7 @@ ARG APP_DATA
 # Create CRON configuration file
 RUN printf "\n\
 SHELL=/bin/bash \n\
-BASH_ENV=/proc/1/load-envvars \n\
+BASH_ENV=/opt/utils/load-envvars \n\
 \n\
 \043 Setup cron \n\
 00 0 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py RSMAS-CCSM4 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
@@ -206,20 +231,22 @@ BASH_ENV=/proc/1/load-envvars \n\
 00 8 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 30 8 * * 5  cd ${APP_HOME}; python run_operativo_20-80.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1 \n\
 \n" > ${APP_HOME}/crontab.conf
-RUN chmod u=rw,g=r,o=r ${APP_HOME}/crontab.conf
 
-# Create script to check container health
+# Create script to check the container's health
 RUN printf "#!/bin/bash \n\
+readonly TRGT='operational' \n\
 if [ \$(find ${APP_HOME} -type f -name '*.pid' 2>/dev/null | wc -l) != 0 ] || \n\
-   [ \$(echo 'KEYS *' | redis-cli -h \${REDIS_HOST} 2>/dev/null | grep -c cdi) != 0 ] && \n\
+   [ \$(echo 'KEYS *' | redis-cli -h \${REDIS_HOST} 2>/dev/null | grep -c ${TRGT}) != 0 ] && \n\
    [ \$(ps -ef | grep -v 'grep' | grep -c 'python') == 0 ] \n\
 then \n\
   exit 1 \n\
 else \n\
   exit 0 \n\
 fi \n\
-\n" > ${APP_HOME}/check-healthy.sh
-RUN chmod u=rwx,g=rx,o=rx ${APP_HOME}/check-healthy.sh
+\n" > /opt/utils/check-healthy
+
+# Set minimal permissions to the new scripts and files
+RUN chmod u=rw,g=r,o=r ${APP_HOME}/crontab.conf
 
 # Set read-only environment variables
 ENV APP_HOME=${APP_HOME}
@@ -260,14 +287,14 @@ RUN mkdir -p /home/.local/share && \
 RUN chmod -R a+rwx /home/.local /home/.cache /home/.config
 
 # Add Tini (https://github.com/krallin/tini#using-tini)
-ENTRYPOINT [ "/usr/bin/tini", "-g", "--" ]
+ENTRYPOINT [ "/usr/bin/tini", "-g", "--", "/opt/utils/entrypoint" ]
 
 # Run your program under Tini (https://github.com/krallin/tini#using-tini)
 CMD [ "cron", "-fL", "15" ]
 # or docker run your-image /your/program ...
 
 # Configurar verificación de la salud del contenedor
-HEALTHCHECK --interval=3s --timeout=3s --retries=3 CMD bash ${APP_HOME}/check-healthy.sh
+HEALTHCHECK --interval=3s --timeout=3s --retries=3 CMD bash /opt/utils/check-healthy
 
 # Set work directory
 WORKDIR ${APP_HOME}
