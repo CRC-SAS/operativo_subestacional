@@ -1,4 +1,17 @@
 
+##################################################################
+##                           README                             ##
+##################################################################
+## Este Dockerfile permite agregar un usuario non-root a cual-  ##
+## imagen pre-existente. Además, tanto el nuevo usuario como la ##
+## imagen resultante, están configurados de manera a permitir   ##
+## la realización de operaciones y/o tareas de desarrollo, man- ##
+## tenimiento y debub. Los principales aportes de esta nueva    ##
+## imágen son: la creación de un usuario non-root y la instala- ##
+## ción y configuración del comando sudo.                       ##
+##################################################################
+
+
 
 ##########################
 ## Set GLOBAL arguments ##
