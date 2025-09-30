@@ -160,9 +160,6 @@ if __name__ == '__main__':
             p1_20_final.to_netcdf(n_archivo0)
         elif percentil == '80':
             p1_80_final.to_netcdf(n_archivo1)
-        else:
-            p1.to_netcdf(n_archivo0)
-            p2.to_netcdf(n_archivo1)
 
 
     #########################

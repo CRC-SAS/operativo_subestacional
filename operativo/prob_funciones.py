@@ -279,18 +279,21 @@ def calc_prob(fcst_m, hcst_f, media_f, pctil_f, pctil):
     new_fcst = fcst_m - hcst_f + media_f
    
     if pctil == 20:
-        p1 = 100*(xr.where(new_fcst < pctil_f, 1., 0. ).sum(dim='M')/fcst_m.sizes['M'])
+        with xr.set_options(keep_attrs=True):
+            p1 = 100 * (xr.where(new_fcst < pctil_f, 1., 0. ).sum(dim='M') / fcst_m.sizes['M'])
         p1 = p1.rename('prob')
         p1 = p1.assign_attrs(standard_name='Probabilidad bajo percentil 20')
         p2 = []
     elif pctil == 80:
-        p1 = 100*(xr.where(new_fcst > pctil_f, 1., 0. ).sum(dim='M')/fcst_m.sizes['M'])
+        with xr.set_options(keep_attrs=True):
+            p1 = 100 * (xr.where(new_fcst > pctil_f, 1., 0. ).sum(dim='M') / fcst_m.sizes['M'])
         p1 = p1.rename('prob')
         p1 = p1.assign_attrs(standard_name='Probabilidad sobre percentil 80')
         p2 = []
     else: # pctil = 50
-        p1 = 100*(xr.where(new_fcst < pctil_f, 1., 0. ).sum(dim='M')/fcst_m.sizes['M'])
-        p2 = 100*(xr.where(new_fcst > pctil_f, 1., 0. ).sum(dim='M')/fcst_m.sizes['M'])
+        with xr.set_options(keep_attrs=True):
+            p1 = 100 * (xr.where(new_fcst < pctil_f, 1., 0. ).sum(dim='M') / fcst_m.sizes['M'])
+            p2 = 100 * (xr.where(new_fcst > pctil_f, 1., 0. ).sum(dim='M') / fcst_m.sizes['M'])
         p1 = p1.rename('prob')
         p2 = p2.rename('prob')
         p1 = p1.assign_attrs(standard_name='Probabilidad bajo percentil 50')
@@ -322,13 +325,15 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
             std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
             std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
-            corr_factor = PAC*(std_o/std_p)
-            prob = p1.sel(semanas=week)*0.01
-            p_corr = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
-            p_corr = 100.*p_corr
+            with xr.set_options(keep_attrs=True):
+                corr_factor = PAC * (std_o / std_p)
+                prob = p1.sel(semanas=week) * 0.01
+                p_corr = xr.where(corr_factor > 0, (cp + corr_factor * (prob - cp)), cp)
+                p_corr = 100. * p_corr
             p_corr = p_corr.rename('prob_corr')
             list_corr.append(p_corr)
         p1_corr = xr.concat(list_corr, dim='semanas', coords='different', compat='equals')
+        p1_corr = p1_corr.drop_vars('number') if 'number' in list(p1_corr.coords) else p1_corr
         return p1_corr, p1_corr
     else:
         "Hay datos en p2, ie el percentil es 50 y se calculan probabilidades por sobre y por debajo"
@@ -344,10 +349,11 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
             std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
             std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
-            corr_factor = PAC*(std_o/std_p)
-            prob = p1.sel(semanas=week)*0.01
-            p_corr1 = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
-            p_corr1 = 100.*p_corr1
+            with xr.set_options(keep_attrs=True):
+                corr_factor = PAC * (std_o / std_p)
+                prob = p1.sel(semanas=week) * 0.01
+                p_corr1 = xr.where(corr_factor > 0, (cp + corr_factor * (prob - cp)), cp)
+                p_corr1 = 100. * p_corr1
             p_corr1 = p_corr1.rename('prob_corr')
             ############################################
             # Archivos para corregir 50+
@@ -359,15 +365,18 @@ def calc_prob_corr(p1, p2, variable, modelo, percentil):
             PAC = xr.open_dataset(f1, engine='netcdf4', decode_timedelta=True)['PAC']
             std_o = xr.open_dataset(f2, engine='netcdf4', decode_timedelta=True)['std_o']
             std_p = xr.open_dataset(f3, engine='netcdf4', decode_timedelta=True)['std_p']
-            corr_factor = PAC*(std_o/std_p)
-            prob = p2.sel(semanas=week)*0.01
-            p_corr2 = xr.where(corr_factor>0, (cp  + corr_factor*(prob - cp)), cp)
-            p_corr2 = 100.*p_corr2
+            with xr.set_options(keep_attrs=True):
+                corr_factor = PAC * (std_o / std_p)
+                prob = p2.sel(semanas=week) * 0.01
+                p_corr2 = xr.where(corr_factor > 0, (cp + corr_factor * (prob - cp)), cp)
+                p_corr2 = 100. * p_corr2
             p_corr2 = p_corr2.rename('prob_corr')
             list_corr1.append(p_corr1)
             list_corr2.append(p_corr2)
         p1_corr = xr.concat(list_corr1, dim='semanas', coords='different', compat='equals')
+        p1_corr = p1_corr.drop_vars('number') if 'number' in list(p1_corr.coords) else p1_corr
         p2_corr = xr.concat(list_corr2, dim='semanas', coords='different', compat='equals')
+        p2_corr = p2_corr.drop_vars('number') if 'number' in list(p2_corr.coords) else p2_corr
         return p1_corr, p2_corr
 
 
@@ -393,9 +402,10 @@ def calc_prob_corr_extr(p1, p2):
     i = 1
     if negativo:
         while i <= max_iter:
-            discrepancy = xr.where(p1 < 0, p1-1, 0)
-            # sumamos la mitad a donde corresponda
-            p2_o = p2 + 0.5*discrepancy
+            with xr.set_options(keep_attrs=True):
+                discrepancy = xr.where(p1 < 0, p1-1, 0)
+                # sumamos la mitad a donde corresponda
+                p2_o = p2 + 0.5 * discrepancy
             p1_o = p1_o.where(p1 >= 0, 1)
             i += 1
     p1_o = p1_o.where(p1_o >= 0, 1)
@@ -405,9 +415,10 @@ def calc_prob_corr_extr(p1, p2):
     i = 1
     if positivo:
         while i <= max_iter:
-            discrepancy = xr.where(p1 > 100., p1-99, 0)
-            # sumamos la mitad a donde corresponda
-            p2_o = p2 + 0.5*discrepancy
+            with xr.set_options(keep_attrs=True):
+                discrepancy = xr.where(p1 > 100., p1-99, 0)
+                # sumamos la mitad a donde corresponda
+                p2_o = p2 + 0.5 * discrepancy
             p1_o = p1_o.where(p1 <= 100, 99)
             i += 1
     positivo = bool((p1_o > 100).any().to_numpy().any())
@@ -421,9 +432,10 @@ def calc_prob_corr_extr(p1, p2):
     i = 1
     if negativo:
         while i <= max_iter:
-            discrepancy = xr.where(p2 < 0, p2 - 1, 0)
-            # sumamos la mitad a donde corresponda
-            p1_o = p1 + 0.5*discrepancy
+            with xr.set_options(keep_attrs=True):
+                discrepancy = xr.where(p2 < 0, p2 - 1, 0)
+                # sumamos la mitad a donde corresponda
+                p1_o = p1 + 0.5 * discrepancy
             p2_o = p2_o.where(p2 >= 0, 1)
             i += 1
     negativo = bool((p2_o < 0).any().to_numpy().any())
@@ -436,9 +448,10 @@ def calc_prob_corr_extr(p1, p2):
     i = 1
     if positivo:
         while i <= max_iter:
-            discrepancy = xr.where(p2 > 100., p2 - 99, 0)
-            # sumamos la mitad a donde corresponda
-            p1_o = p1 + 0.5*discrepancy
+            with xr.set_options(keep_attrs=True):
+                discrepancy = xr.where(p2 > 100., p2 - 99, 0)
+                # sumamos la mitad a donde corresponda
+                p1_o = p1 + 0.5 * discrepancy
             p2_o = p2_o.where(p2 <= 100, 99)
             i += 1
     positivo = bool((p2_o > 100).any().to_numpy().any())
