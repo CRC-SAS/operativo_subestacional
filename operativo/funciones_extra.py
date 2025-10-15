@@ -413,7 +413,12 @@ def get_nearest_gmao_date(fecha_guia: dt.datetime):
     config = GlobalConfig.Instance().app_config
 
     # Leer fechas correspondientes a GMAO
-    fechas_gmao_posibles = pd.DataFrame(config.fechas_gmao[1:], columns=config.fechas_gmao[0])
+    fechas_gmao_posibles = pd.DataFrame(
+        data=config.fechas_gmao[1:], columns=config.fechas_gmao[0])
+
+    # Renombrar mes y día
+    fechas_gmao_posibles = fechas_gmao_posibles.rename(
+        columns={"mes": "month", "dia": "day"})
 
     # Agregar año, hora y minuto a las fechas gmao
     fechas_gmao_posibles['year'] = fecha_guia.year
@@ -421,7 +426,7 @@ def get_nearest_gmao_date(fecha_guia: dt.datetime):
     fechas_gmao_posibles['minute'] = fecha_guia.minute
 
     # Definir columnas as er utilizadas
-    columnas = ['year', 'mes', 'dia', 'hour', 'minute']
+    columnas = ['year', 'month', 'day', 'hour', 'minute']
 
     # Extraer solo columnas a ser utilizadas
     fechas_gmao_posibles = fechas_gmao_posibles[columnas]
