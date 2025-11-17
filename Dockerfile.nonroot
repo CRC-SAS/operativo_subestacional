@@ -80,7 +80,7 @@ RUN echo "root:${ROOT_PWD}" | chpasswd
 # https://medium.com/@abaqueiro/best-security-practices-for-building-apps-inside-containers-3158c533a2b0
 RUN groupadd --gid ${USER_GID} ${GRP_NAME}
 RUN useradd --uid ${USER_UID} --gid ${USER_GID} --create-home \
-    --gecos 'Non-root User' --no-log-init --shell /bin/bash \
+    --comment 'Non-root User' --no-log-init --shell /bin/bash \
     ${USR_NAME}
 
 # Modify the password of non-root user
