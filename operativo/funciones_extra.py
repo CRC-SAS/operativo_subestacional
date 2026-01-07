@@ -185,26 +185,15 @@ def grouping_coord_fecha(ds, miercoles, hcast=0):
             sem4_i = pd.Timestamp(miercoles + dt.timedelta(days=29) + dt.timedelta(hours=12))
         elif hcast == 1:
             f_model = (ds.S+ds.L).values
-            if pd.Timestamp(f_model[0]) <= miercoles:
+            if pd.Timestamp(f_model[0]).date() <= miercoles.date():
                 # El modelo tiene datos antes del miercoles guía.
                 # Usamos la primera semana desde el jueves para alinear con GEFS esa semana.
-                sem1_i = pd.Timestamp(miercoles + dt.timedelta(days=1) + dt.timedelta(hours=12))
+                sem1_i = pd.Timestamp(miercoles + dt.timedelta(days=1) + dt.timedelta(hours=12)).replace(year=1960)
             else:
-                sem1_i = pd.Timestamp(f_model[0])
-            sem2_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=8) + dt.timedelta(hours=12))
-            sem3_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=15) + dt.timedelta(hours=12))
-            sem4_i = pd.Timestamp(miercoles.replace(year=1960) + dt.timedelta(days=29) + dt.timedelta(hours=12))
-        elif hcast == 2:
-            f_model = (ds.S+ds.L).values
-            if pd.Timestamp(f_model[0]) <= miercoles:
-                # El modelo tiene datos antes del miercoles guía.
-                # Usamos la primera semana desde el jueves para alinear con GEFS esa semana.
-                sem1_i = pd.Timestamp(miercoles + dt.timedelta(days=1) + dt.timedelta(hours=12))
-            else:
-                sem1_i = pd.Timestamp(f_model[0])
-            sem2_i = pd.Timestamp(miercoles + dt.timedelta(days=8) + dt.timedelta(hours=12))
-            sem3_i = pd.Timestamp(miercoles + dt.timedelta(days=15) + dt.timedelta(hours=12))
-            sem4_i = pd.Timestamp(miercoles + dt.timedelta(days=29) + dt.timedelta(hours=12))
+                sem1_i = pd.Timestamp(f_model[0]).replace(year=1960)
+            sem2_i = pd.Timestamp(miercoles + dt.timedelta(days=8) + dt.timedelta(hours=12)).replace(year=1960)
+            sem3_i = pd.Timestamp(miercoles + dt.timedelta(days=15) + dt.timedelta(hours=12)).replace(year=1960)
+            sem4_i = pd.Timestamp(miercoles + dt.timedelta(days=29) + dt.timedelta(hours=12)).replace(year=1960)
         #
         fechas_m = np.array([pd.Timestamp(a)==sem1_i for a in f_model])
         i1 = fechas_m.argmax()
