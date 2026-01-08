@@ -10,7 +10,7 @@ desc_variables:
   tas: 'Temperatura media de la semana'
 
 mapeo_variables:
-  pr: 'precip'
+  pr: 'rain'  # precip para datos del CPC, y rain para datos de ERA5
   tas: 'tmean'
   tasmin: 'tmin'
   tasmax: 'tmax'
