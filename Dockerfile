@@ -308,11 +308,12 @@ WORKDIR ${APP_HOME}
 
 # CONSTRUIR IMAGEN (CORE)
 # docker build --pull \
-#   --tag ghcr.io/crc-sas/operativo_subestacional:core-v1.0 \
+#   --tag ghcr.io/crc-sas/operativo_subestacional:core-v2.0 \
+#   --label "org.opencontainers.image.description=La precipitación se toma de ERA5." \
 #   --file Dockerfile .
 
 # PUBLICAR IMAGEN (CORE)
-# docker push ghcr.io/crc-sas/operativo_subestacional:core-v1.0
+# docker push ghcr.io/crc-sas/operativo_subestacional:core-v2.0
 
 # CORRER MANUALMENTE (CRONTAB)
 # docker run --rm \
