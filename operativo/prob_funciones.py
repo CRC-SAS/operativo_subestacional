@@ -142,6 +142,9 @@ def get_hindcast_data(archivo, variable, fecha, miercoles):
 
 def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
 
+    # Acceder a la configuración global
+    config = GlobalConfig.Instance().app_config
+
     ##### Media diaria ERA5 (la de CPC andaba mal)
     # se extraen los datos de la semana
     # se extiende el año hasta el 28 de febrero.
@@ -163,9 +166,9 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     media1, fechas = grouping_coord_fecha(media, miercoles, hcast=1)
     #
     media_m = xr.DataArray()
-    if variable == 'tmean':
+    if variable == config.mapeo_variables.tas:
         media_m = media1.groupby('semanas').mean(dim='S').squeeze()
-    elif variable == 'precip':
+    elif variable == config.mapeo_variables.pr:
         media_m = media1.groupby('semanas').sum(dim='S').squeeze()
     # Interpolamos a la reticula de subX
     media_m_i = media_m.interp_like(dato_o)
