@@ -1,5 +1,6 @@
 
 import os
+import sys
 import argparse
 import datetime as dt
 import logging
@@ -14,6 +15,7 @@ from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_e
 
 from setup.config import  GlobalConfig
 from controllers.script import ScriptControl
+from errors.forecasts import FcstNotYetPublished
 
 
 VALID_MODELS = ['RSMAS-CCSM4', 'NCEP-CFSv2', 'EMC-GEFSv12_CPC', 'GMAO-GEOS_V2p1', 'ECCC-GEPS8']
@@ -116,11 +118,21 @@ if __name__ == '__main__':
     out_folder = carpeta_datos + '/forecast/' + args.variable + '/' + miercoles.strftime('%Y%m%d%H%M') + '/'
     os.makedirs(out_folder, exist_ok=True)
 
-    match args.modelo:
-        case 'NCEP-CFSv2':
-            out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
-        case _:  # Default case
-            out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
+    try:
+
+        match args.modelo:
+            case 'NCEP-CFSv2':
+                out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
+            case _:  # Default case
+                out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
+
+    except FcstNotYetPublished as e:
+        logging.error(f'{str(e)}')
+        # Finalizar el script borrando PID
+        script.end_script_execution()
+        # Detener ejecución del script
+        sys.exit(0)
+
 
 
     #############################

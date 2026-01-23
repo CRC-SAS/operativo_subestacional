@@ -1,6 +1,8 @@
 
 log_level: 'INFO'
 
+dias_tolerancia_pub: 20
+
 carpeta_datos: "${CARPETA_DATOS}"
 carpeta_figuras: "${CARPETA_FIGURAS}"
 corregir: !!bool True

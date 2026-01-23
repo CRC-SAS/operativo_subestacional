@@ -20,6 +20,7 @@ from typing import cast
 from calendar import Day
 
 from setup.config import GlobalConfig
+from errors.forecasts import FcstNotFound, FcstNotYetPublished
 
 
 VALID_DATE_FORMATS = ['%Y%m%d', '%Y-%m-%d', '%Y/%m/%d']
@@ -105,6 +106,13 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
         if validators.url(url_out):
             logging.info(f'######## - Guardando archivo en: {out_file}')
             with requests.get(url_out, stream=True) as r:
+                if '<title>Error 404 Not Found</title>' in r.text:
+                    config = GlobalConfig.Instance().app_config
+                    diff_dates = abs(dt.date.today() - fecha.date())
+                    if diff_dates.days < config.dias_tolerancia_pub:
+                        raise FcstNotYetPublished(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+                    else:
+                        raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
                 with open(out_file, 'wb') as file_obj:
                     shutil.copyfileobj(r.raw, file_obj)
         else:
