@@ -318,7 +318,7 @@ WORKDIR ${APP_HOME}
 # CORRER MANUALMENTE (CRONTAB)
 # docker run --rm \
 #   --name prono-subestacional-rm \
-#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v1.0 crontab -l
+#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v2.0 crontab -l
 
 # CORRER MANUALMENTE (CALIBRACIÓN - NO FUNCIONA SIN REDIS, POR PERMISOS DE ESCRITURA EN APP_HOME)
 # docker run --rm \
@@ -327,7 +327,7 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v1.0 \
+#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v2.0 \
 #   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
 
 # CORRER OPERATIVAMENTE (CALIBRACIÓN - NO FUNCIONA SI NO SE CREA UN USUARIO)
@@ -337,4 +337,4 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --detach ghcr.io/crc-sas/operativo_subestacional:core-v1.0
+#   --detach ghcr.io/crc-sas/operativo_subestacional:core-v2.0
