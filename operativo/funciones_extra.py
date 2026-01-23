@@ -95,10 +95,10 @@ def gen_url_download(fecha, variable='tas', tipo='forecast', conj='ECCC', modelo
     return url_out
 
 
-def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
+def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownload: bool = False):
     url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
     out_file = out_folder + variable + '_' + modelo + '_' + fecha.strftime('%Y%m%d%H%M') + '_forecast.nc'
-    if os.path.isfile(out_file):
+    if os.path.isfile(out_file) and not redownload:
         logging.info(f'######## El archivo {modelo} para la fecha: {fecha} ya esta descargado y disponible')
     else:
         logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
@@ -114,12 +114,12 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder):
     return out_file
 
 
-def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder):
+def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder, redownload: bool = False):
 
     for fechai in [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]:
         url_out = gen_url_download(fechai, variable, tipo, conj, modelo)
         out_file = out_folder + variable + '_' + modelo + '_' + fechai.strftime('%Y%m%d%H%M') + '_forecast.nc'
-        if os.path.isfile(out_file):
+        if os.path.isfile(out_file) and not redownload:
             logging.info(f'######## El archivo {modelo} para la fecha: {fechai} ya esta descargado y disponible')
             continue
         else:

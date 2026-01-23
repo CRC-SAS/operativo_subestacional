@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('fecha', type=parse_date, help='Date to be calibrated')
     parser.add_argument('variable', type=str, choices=['pr', 'tas'], help='Variable to be calibrated (pr or tas)')
     parser.add_argument('--no-plot', dest= 'plot_maps', action='store_false', help='Don\'t generate built-in plots')
+    parser.add_argument('--re-download', dest= 'redownload', action='store_true', help='Redownload input files for calibration')
 
     return parser.parse_args()
 
@@ -117,9 +118,9 @@ if __name__ == '__main__':
 
     match args.modelo:
         case 'NCEP-CFSv2':
-            out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, tipo, conj, modelo, out_folder)
+            out_files = descarga_pronostico_CFSv2(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
         case _:  # Default case
-            out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder)
+            out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
 
 
     #############################
