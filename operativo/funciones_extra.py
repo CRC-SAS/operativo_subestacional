@@ -114,7 +114,8 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
                     else:
                         raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
                 with open(out_file, 'wb') as file_obj:
-                    shutil.copyfileobj(r.raw, file_obj)
+                    for chunk in r.iter_content(chunk_size=8192):
+                        file_obj.write(chunk)
         else:
             logging.error('######## - URL inválida!!')
     logging.info('#####################################################')
