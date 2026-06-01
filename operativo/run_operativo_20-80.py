@@ -141,38 +141,55 @@ if __name__ == '__main__':
 
     # Percentil 20
     fcst_m, hcst_f, media_f, pctil_f, fechas_v = get_data(fecha_d, 20, miercoles, args.variable, modelo)
-    p1, p2 = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(20))
-    p1_20 = p1.sel(semanas=slice(1,3))
+    p1_20, _ = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(20))
+    p1_dn20 = p1_20.sel(semanas=slice(1,3))
+
+    # Percentil 50
+    fcst_m, hcst_f, media_f, pctil_f, _ = get_data(fecha_d, 50, miercoles, args.variable, modelo)
+    p1_50, p2_50 = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(50))
+    p1_dn50, p2_up50 = p1_50.sel(semanas=slice(1,3)), p2_50.sel(semanas=slice(1,3))
 
     # Percentil 80
     fcst_m, hcst_f, media_f, pctil_f, _ = get_data(fecha_d, 80, miercoles, args.variable, modelo)
-    p1, _ = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(80))
-    p1_80 = p1.sel(semanas=slice(1,3))
+    p1_80, _ = calc_prob(fcst_m, hcst_f, media_f, pctil_f, int(80))
+    p1_up80 = p1_80.sel(semanas=slice(1,3))
 
     # Corrección de probabilidad por PAC
-    p1_20_corr, p2_20_corr = calc_prob_corr(p1_20, p2, args.variable, modelo, '20')
-    p1_80_corr, p2_80_corr = calc_prob_corr(p1_80, p2, args.variable, modelo, '80')
+    p1_dn20_corr = calc_prob_corr(p1_dn20, [], args.variable, modelo, '20')
+    p1_dn50_corr, p2_up50_corr = calc_prob_corr(p1_dn50, p2_up50, args.variable, modelo, '50')
+    p1_up80_corr = calc_prob_corr(p1_up80, [], args.variable, modelo, '80')
 
     # Corrección de probabilidad negativas/positivas
-    p1_20_final, p1_80_final = calc_prob_corr_extr(p1_20_corr, p1_80_corr)
+    p1_dn20_final, p1_up80_final = calc_prob_corr_extr(p1_dn20_corr, p1_up80_corr)
+    p1_dn50_final, p2_up50_final = calc_prob_corr_extr(p1_dn50_corr, p2_up50_corr)
+
+    #
+    p1_dn20_final = p1_dn20_final.assign_coords(S=('semanas', pd.DatetimeIndex(p1_dn20_final['S'].values)))
+    p1_dn50_final = p1_dn50_final.assign_coords(S=('semanas', pd.DatetimeIndex(p1_dn50_final['S'].values)))
+    p2_up50_final = p2_up50_final.assign_coords(S=('semanas', pd.DatetimeIndex(p2_up50_final['S'].values)))
+    p1_up80_final = p1_up80_final.assign_coords(S=('semanas', pd.DatetimeIndex(p1_up80_final['S'].values)))
 
 
     #########################
     # Generación de archivo #
     #########################
 
-    for percentil in ['20', '80']:
+    for percentil in ['20-', '50-', '50+', '80+']:
         fecha_str = fecha_d.strftime('%Y%m%d%H%M')
         fecha_mie = miercoles.strftime('%Y%m%d%H%M')
         c_out = carpeta_datos + '/prob/' + args.variable + '/' + fecha_mie + '/' + percentil + '/'
-        n_archivo0 = c_out + args.variable + '_underpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
-        n_archivo1 = c_out + args.variable + '_overpctil' + percentil + '_' + modelo + '_' + fecha_str + '_probability.nc'
+        n_archivo0 = c_out + args.variable + '_underpctil' + percentil[0:2] + '_' + modelo + '_' + fecha_str + '_probability.nc'
+        n_archivo1 = c_out + args.variable + '_overpctil' + percentil[0:2] + '_' + modelo + '_' + fecha_str + '_probability.nc'
         logging.info(f'######## Guardando los datos en: {c_out} ###')
         os.makedirs(c_out, exist_ok=True)
-        if percentil == '20':
-            p1_20_final.to_netcdf(n_archivo0)
-        elif percentil == '80':
-            p1_80_final.to_netcdf(n_archivo1)
+        if percentil == '20-':
+            p1_dn20_final.to_netcdf(n_archivo0)
+        elif percentil == '50-':
+            p1_dn50_final.to_netcdf(n_archivo0)
+        elif percentil == '50+':
+            p2_up50_final.to_netcdf(n_archivo1)
+        elif percentil == '80+':
+            p1_up80_final.to_netcdf(n_archivo1)
 
 
     #########################
@@ -180,7 +197,7 @@ if __name__ == '__main__':
     #########################
 
     if args.plot_maps:
-        for percentil in ['20', '80']:
+        for percentil in ['20-', '50-', '50+', '80+']:
             c_out_f = carpeta_figuras + '/' + fecha_mie + '/' + percentil + '/'
             os.makedirs(c_out_f, exist_ok=True)
 
@@ -191,10 +208,14 @@ if __name__ == '__main__':
 
             for week, f1, f2 in zip([1,2,3], f1s, f2s):
                 logging.info(f'######## - Figura semana: {week}')
-                if percentil == '20':
-                    mapa_probabilidad(args.variable, p1_20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
-                elif percentil == '80':
-                    mapa_probabilidad(args.variable, p1_80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
+                if percentil == '20-':
+                    mapa_probabilidad(args.variable, p1_dn20_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                elif percentil == '50-':
+                    mapa_probabilidad(args.variable, p1_dn50_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                elif percentil == '50+':
+                    mapa_probabilidad(args.variable, p2_up50_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                elif percentil == '80+':
+                    mapa_probabilidad(args.variable, p1_up80_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
 
 
     logging.info('#####################################################')
