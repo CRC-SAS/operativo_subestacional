@@ -163,7 +163,7 @@ if __name__ == '__main__':
     p1_dn20_final, p1_up80_final = calc_prob_corr_extr(p1_dn20_corr, p1_up80_corr)
     p1_dn50_final, p2_up50_final = calc_prob_corr_extr(p1_dn50_corr, p2_up50_corr)
 
-    #
+    # Ajustar el resultado final
     p1_dn20_final = p1_dn20_final.assign_coords(S=('semanas', pd.DatetimeIndex(p1_dn20_final['S'].values)))
     p1_dn50_final = p1_dn50_final.assign_coords(S=('semanas', pd.DatetimeIndex(p1_dn50_final['S'].values)))
     p2_up50_final = p2_up50_final.assign_coords(S=('semanas', pd.DatetimeIndex(p2_up50_final['S'].values)))

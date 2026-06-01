@@ -139,7 +139,7 @@ USER ${USR_NAME}
 #   --mount type=bind,source=$(pwd)/datos,target=/opt/pronos/datos \
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --tty --interactive nonroot-subestacional:latest \
-#   python run_operativo_20-80.py RSMAS-CCSM4 20250101 pr
+#   python run_operativo.py RSMAS-CCSM4 20250101 pr
 
 # CORRER OPERATIVAMENTE
 # docker run --rm \
