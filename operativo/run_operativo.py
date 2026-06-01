@@ -155,9 +155,9 @@ if __name__ == '__main__':
     p1_up80 = p1_80.sel(semanas=slice(1,3))
 
     # Corrección de probabilidad por PAC
-    p1_dn20_corr = calc_prob_corr(p1_dn20, [], args.variable, modelo, '20')
+    p1_dn20_corr, _ = calc_prob_corr(p1_dn20, [], args.variable, modelo, '20')
     p1_dn50_corr, p2_up50_corr = calc_prob_corr(p1_dn50, p2_up50, args.variable, modelo, '50')
-    p1_up80_corr = calc_prob_corr(p1_up80, [], args.variable, modelo, '80')
+    p1_up80_corr, _ = calc_prob_corr(p1_up80, [], args.variable, modelo, '80')
 
     # Corrección de probabilidad negativas/positivas
     p1_dn20_final, p1_up80_final = calc_prob_corr_extr(p1_dn20_corr, p1_up80_corr)
