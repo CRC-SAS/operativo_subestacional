@@ -153,7 +153,7 @@ def get_media_data(archivo, variable, f1, f2, dato_o, miercoles):
     new_time_coords = pd.date_range(start='1961-01-01', end='1961-02-28', freq='D')
     media1 = media1.assign_coords(time=('S', new_time_coords))
     media1 = media1.swap_dims({'S': 'time'})
-    media1 = media1.drop('S')
+    media1 = media1.drop_vars('S')
     media1 = media1.rename({'time':'S'})
     #
     media = xr.concat([media0, media1], dim='S', coords='different', compat='equals')
