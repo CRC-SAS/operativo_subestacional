@@ -309,28 +309,28 @@ def mapa_probabilidad(variable, prob, percentil, week, modelo, f1, f2, c_out, co
     titulof = 'Inicio: ' + f1.strftime('%HH %d/%m/%Y') + '\n ' + f2.strftime('%d/%m/%Y')
 
     # Paleta colores
-    if ((percentil == '20') or (percentil == '50-')) & (variable=='tas'):
+    if ((percentil == '20-') or (percentil == '50-')) & (variable=='tas'):
         if corr:
             titulo = 'Prob. Corr. por debajo del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
         # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlGnBu'))(10)
         c_pp = ['#FFFFD9', '#EFF8B5', '#CFECB3', '#97D6B8', '#5CC0C0', '#30A5C2', '#1E80B8', '#2254A3', '#21318D', '#081D58']
-    elif ((percentil == '80') or (percentil == '50+')) & (variable=='tas'):
+    elif ((percentil == '80+') or (percentil == '50+')) & (variable=='tas'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por encima del percentil ' + percentil[0:2]
         # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlOrRd'))(10)
         c_pp = ['#FFFFCC', '#FFEFA4', '#FEDD7F', '#FEBF5A', '#FD9D43', '#FC7134', '#F33C25', '#DA141E', '#B60026', '#800026']
-    elif ((percentil == '20') or (percentil == '50-')) & (variable=='pr'):
+    elif ((percentil == '20-') or (percentil == '50-')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por debajo del percentil ' + percentil[0:2]
         else:
             titulo = 'Prob. por debajo del percentil ' + percentil[0:2]
         # colores generados con: grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, 'YlOrBr'))(10)
         c_pp = ['#FFFFE5', '#FFF7C0', '#FEE79A', '#FECE65', '#FEAC39', '#F6861F', '#E1640E', '#C04602', '#933204', '#662506']
-    elif ((percentil == '80') or (percentil == '50+')) & (variable=='pr'):
+    elif ((percentil == '80+') or (percentil == '50+')) & (variable=='pr'):
         if corr:
             titulo = 'Prob. Corr. por encima del percentil ' + percentil[0:2]
         else:

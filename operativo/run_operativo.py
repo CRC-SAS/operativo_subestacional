@@ -210,13 +210,13 @@ if __name__ == '__main__':
             for week, f1, f2 in zip([1,2,3], f1s, f2s):
                 logging.info(f'######## - Figura semana: {week}')
                 if percentil == '20-':
-                    mapa_probabilidad(args.variable, p1_dn20_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                    mapa_probabilidad(args.variable, p1_dn20_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
                 elif percentil == '50-':
-                    mapa_probabilidad(args.variable, p1_dn50_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                    mapa_probabilidad(args.variable, p1_dn50_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
                 elif percentil == '50+':
-                    mapa_probabilidad(args.variable, p2_up50_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                    mapa_probabilidad(args.variable, p2_up50_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
                 elif percentil == '80+':
-                    mapa_probabilidad(args.variable, p1_up80_final, percentil[0:2], week, modelo, f1, f2, c_out_f, corr=corregir)
+                    mapa_probabilidad(args.variable, p1_up80_final, percentil, week, modelo, f1, f2, c_out_f, corr=corregir)
 
 
     logging.info('#####################################################')
