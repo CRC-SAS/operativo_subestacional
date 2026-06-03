@@ -20,7 +20,7 @@ services:
       context: ..
       dockerfile: Dockerfile.nonroot
       args:
-        - BASE_IMAGE=ghcr.io/crc-sas/operativo_subestacional:core-v2.0
+        - BASE_IMAGE=ghcr.io/crc-sas/operativo_subestacional:core-v3.0
         - USR_DIRS=/opt/pronos/operativo /opt/pronos/datos /opt/pronos/figuras
         - USER_UID=${USER_UID}
         - USER_GID=${USER_GID}

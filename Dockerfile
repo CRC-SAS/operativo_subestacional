@@ -5,7 +5,7 @@
 ##########################
 
 # Set python version
-ARG PYTHON_VERSION="3.13"
+ARG PYTHON_VERSION="3.14"
 
 # Set image variant
 ARG IMG_VARIANT="-slim"
@@ -75,6 +75,18 @@ COPY --from=py_builder /usr/src/app/wheels /wheels
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install --no-cache /wheels/* && \
     rm -rf /wheels
+
+# Renew ARGs
+# OBS: In both Podman and Docker, ENV variables always take precedence over ARG
+# variables of the same name. So, if the base image already contains ENV PYTHON_VERSION,
+# declaring ARG PYTHON_VERSION and passing --build-arg PYTHON_VERSION=* won't change
+# the original value of ENV PYTHON_VERSION of the base image.
+ARG PYTHON_VERSION
+
+# Set PYTHONPATH (https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH)
+# In Debian, Python packages are usually located in dist-packages, not site-packages.
+# Setting the PYTHONPATH environment variable tells applications where to find them.
+ENV PYTHONPATH=/usr/local/lib/python${PYTHON_VERSION%.*}/site-packages
 
 
 
@@ -320,17 +332,17 @@ WORKDIR ${APP_HOME}
 
 # CONSTRUIR IMAGEN (CORE)
 # docker build --pull \
-#   --tag ghcr.io/crc-sas/operativo_subestacional:core-v2.0 \
-#   --label "org.opencontainers.image.description=La precipitación se toma de ERA5." \
+#   --tag ghcr.io/crc-sas/operativo_subestacional:core-v3.0 \
+#   --label "org.opencontainers.image.description=Se agrega probs -50 y +50." \
 #   --file Dockerfile .
 
 # PUBLICAR IMAGEN (CORE)
-# docker push ghcr.io/crc-sas/operativo_subestacional:core-v2.0
+# docker push ghcr.io/crc-sas/operativo_subestacional:core-v3.0
 
 # CORRER MANUALMENTE (CRONTAB)
 # docker run --rm \
 #   --name prono-subestacional-rm \
-#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v2.0 crontab -l
+#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v3.0 crontab -l
 
 # CORRER MANUALMENTE (CALIBRACIÓN - NO FUNCIONA SIN REDIS, POR PERMISOS DE ESCRITURA EN APP_HOME)
 # docker run --rm \
@@ -339,7 +351,7 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v2.0 \
+#   --tty --interactive ghcr.io/crc-sas/operativo_subestacional:core-v3.0 \
 #   python run_operativo.py RSMAS-CCSM4 20250101 pr
 
 # CORRER OPERATIVAMENTE (CALIBRACIÓN - NO FUNCIONA SI NO SE CREA UN USUARIO)
@@ -349,4 +361,4 @@ WORKDIR ${APP_HOME}
 #   --mount type=bind,source=$(pwd)/figuras,target=/opt/pronos/figuras \
 #   --user $(stat -c "%u" .):$(stat -c "%g" .) --env HOME=/home \
 #   --network my-redis-network --env REDIS_HOST=my-redis-container \
-#   --detach ghcr.io/crc-sas/operativo_subestacional:core-v2.0
+#   --detach ghcr.io/crc-sas/operativo_subestacional:core-v3.0

@@ -19,7 +19,10 @@ ARG BASE_IMAGE="prono-subestacional:latest"
 ARG PYCHARM_HOME="/opt/pycharm"
 
 # Set Pycharm version
-ARG PYCHARM_VERSION="2025.2"
+ARG PYCHARM_VERSION="2026.1.2"
+
+# Set custom PYTHONPATH
+ARG CUSTOM_PYTHONPATH=""
 
 
 
@@ -56,7 +59,7 @@ ARG PYCHARM_HOME
 ARG PYCHARM_VERSION
 
 # Download Pycharm IDE
-RUN wget https://download.jetbrains.com/python/pycharm-community-${PYCHARM_VERSION}.tar.gz -P /tmp/
+RUN wget https://download.jetbrains.com/python/pycharm-${PYCHARM_VERSION}.tar.gz -P /tmp/
 
 # Install PyCharm IDE
 RUN count=$(ls /tmp/pycharm-*.tar.gz | wc -l) && [ ${count} = 1 ] \
@@ -64,27 +67,22 @@ RUN count=$(ls /tmp/pycharm-*.tar.gz | wc -l) && [ ${count} = 1 ] \
     && tar xzf /tmp/pycharm-*.tar.gz -C ${PYCHARM_HOME} --strip-components 1 \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
-# Pycharm espera que los paquetes python estén en dist-packages, pero están en site-packages.
-# Esto es así porque python no se instaló usando apt o apt-get, y cuando esto ocurre, la carpeta
-# en la que se instalan los paquetes es site-packages y no dist-packages.
-RUN mkdir -p $(find /usr/local/lib -maxdepth 1 -type d -name 'python*')/dist-packages \
-    && ln -s $(find /usr/local/lib -maxdepth 1 -type d -name 'python*')/site-packages/* \
-             $(find /usr/local/lib -maxdepth 1 -type d -name 'python*')/dist-packages/
-
 # Add Pycharm to the System PATH
 ENV PATH="${PYCHARM_HOME}/bin:${PATH}"
 
-# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- Default (X11)
-# CMD ["pycharm", "-Dide.browser.jcef.enabled=true"]
-# or docker run your-image /your/program ...
+# Renew ARGs
+ARG CUSTOM_PYTHONPATH
 
-# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- X11
-# CMD ["pycharm", "-Dide.browser.jcef.enabled=true", "-Dawt.toolkit.name=XToolkit"]
-# or docker run your-image /your/program ...
+# Update the default PYTHONPATH (Only adds ':' if CUSTOM_PYTHONPATH is set)
+ENV PYTHONPATH="${CUSTOM_PYTHONPATH}${CUSTOM_PYTHONPATH:+:}${PYTHONPATH}"
 
-# Run PyCharm under Tini (https://github.com/krallin/tini#using-tini) -- Wayland
-# CMD ["pycharm", "-Dide.browser.jcef.enabled=true", "-Dawt.toolkit.name=WLToolkit"]
-# or docker run your-image /your/program ...
+
+# Check PYTHONPATH (https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH)
+# The PYTHONPATH environment variable tells PyCharm where to find Python packages.
+RUN [ -z "${PYTHONPATH}" ] \
+    && echo "Error: the CUSTOM_PYTHONPATH build argument must be set!" \
+    && exit 1 \
+    || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
 
 # Run PyCharm under Tini (https://github.com/krallin/tini#using-tini)
 CMD ["pycharm", "--version"]
@@ -106,7 +104,7 @@ CMD ["pycharm", "--version"]
 # CONSTRUIR IMAGEN (PYCHARM CORE)
 # docker build \
 #   --tag pycharm-core:latest \
-#   --build-arg BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v2.0" \
+#   --build-arg BASE_IMAGE="ghcr.io/crc-sas/operativo_subestacional:core-v3.0" \
 #   --file Dockerfile.pycharm .
 
 # CONSTRUIR IMAGEN (PYCHARM NON-ROOT)
