@@ -76,10 +76,9 @@ ARG CUSTOM_PYTHONPATH
 # Update the default PYTHONPATH (Only adds ':' if CUSTOM_PYTHONPATH is set)
 ENV PYTHONPATH="${CUSTOM_PYTHONPATH}${CUSTOM_PYTHONPATH:+:}${PYTHONPATH}"
 
-
 # Check PYTHONPATH (https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH)
 # The PYTHONPATH environment variable tells PyCharm where to find Python packages.
-RUN [ -z "${PYTHONPATH}" ] \
+RUN [ "${PYTHONPATH:-unset}" = "unset" ] \
     && echo "Error: the CUSTOM_PYTHONPATH build argument must be set!" \
     && exit 1 \
     || :  # para entender porque :, ver https://stackoverflow.com/a/49348392/5076110
