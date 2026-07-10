@@ -243,7 +243,7 @@ BASH_ENV=/opt/utils/load-envvars \n\
 00 8 * * 5  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) pr >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 30 8 * * 5  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date +\\%%Y-\\%%m-\\%%d) tas >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 \n\
-\043 Repeat calibration 4 days later \n\
+\043 Repeat calibration 4 days later (the following Tuesday) \n\
 00 0 * * 2  (cd ${APP_HOME} && python run_operativo.py RSMAS-CCSM4 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 30 0 * * 2  (cd ${APP_HOME} && python run_operativo.py RSMAS-CCSM4 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 00 2 * * 2  (cd ${APP_HOME} && python run_operativo.py NCEP-CFSv2 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
@@ -254,6 +254,18 @@ BASH_ENV=/opt/utils/load-envvars \n\
 30 6 * * 2  (cd ${APP_HOME} && python run_operativo.py GMAO-GEOS_V2p1 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 00 8 * * 2  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 30 8 * * 2  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date -d '4 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+\n\
+\043 Repeat calibration 10 days later (two Mondays later) \n\
+00 0 * * 1  (cd ${APP_HOME} && python run_operativo.py RSMAS-CCSM4 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+30 0 * * 1  (cd ${APP_HOME} && python run_operativo.py RSMAS-CCSM4 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+00 2 * * 1  (cd ${APP_HOME} && python run_operativo.py NCEP-CFSv2 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+30 2 * * 1  (cd ${APP_HOME} && python run_operativo.py NCEP-CFSv2 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+00 4 * * 1  (cd ${APP_HOME} && python run_operativo.py EMC-GEFSv12_CPC \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+30 4 * * 1  (cd ${APP_HOME} && python run_operativo.py EMC-GEFSv12_CPC \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+00 6 * * 1  (cd ${APP_HOME} && python run_operativo.py GMAO-GEOS_V2p1 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+30 6 * * 1  (cd ${APP_HOME} && python run_operativo.py GMAO-GEOS_V2p1 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+00 8 * * 1  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) pr --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
+30 8 * * 1  (cd ${APP_HOME} && python run_operativo.py ECCC-GEPS8 \$(date -d '10 days ago' +\\%%Y-\\%%m-\\%%d) tas --re-download >> /proc/1/fd/1 2>> /proc/1/fd/1) \n\
 \n" > ${APP_HOME}/crontab.conf
 
 # Create script to check the container's health
