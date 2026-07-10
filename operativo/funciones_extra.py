@@ -136,7 +136,8 @@ def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder, r
             logging.info(f'######## Descargando archivo {modelo} para la fecha: {fechai}')
             if validators.url(url_out):
                 logging.info(f'######## - Guardando archivo en: {out_file}')
-                with requests.get(url_out, stream=True) as r:
+                firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
+                with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
                     with open(out_file, 'wb') as file_obj:
                         shutil.copyfileobj(r.raw, file_obj)
             else:
