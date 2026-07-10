@@ -103,8 +103,9 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
         logging.info(f'######## El archivo {modelo} para la fecha: {fecha} ya esta descargado y disponible')
     else:
         logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
+        logging.info(f'######## - URL: {url_out}')
         if validators.url(url_out):
-            firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
+            firefox = 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0'
             with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
                 if '<title>Error 404 Not Found</title>' in r.text:
                     config = GlobalConfig.Instance().app_config
@@ -134,8 +135,9 @@ def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder, r
             continue
         else:
             logging.info(f'######## Descargando archivo {modelo} para la fecha: {fechai}')
+            logging.info(f'######## - URL: {url_out}')
             if validators.url(url_out):
-                firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
+                firefox = 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0'
                 with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
                     if '<title>Error 404 Not Found</title>' in r.text:
                         config = GlobalConfig.Instance().app_config
