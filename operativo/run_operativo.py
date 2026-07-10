@@ -4,6 +4,7 @@ import sys
 import argparse
 import datetime as dt
 import pandas as pd
+import requests
 import logging
 
 from calendar import Day
@@ -16,7 +17,7 @@ from prob_funciones import get_data, calc_prob, calc_prob_corr, calc_prob_corr_e
 
 from setup.config import  GlobalConfig
 from controllers.script import ScriptControl
-from errors.forecasts import FcstNotYetPublished
+from errors.forecasts import FcstNotFound, FcstNotYetPublished
 
 
 VALID_MODELS = ['RSMAS-CCSM4', 'NCEP-CFSv2', 'EMC-GEFSv12_CPC', 'GMAO-GEOS_V2p1', 'ECCC-GEPS8']
@@ -127,12 +128,36 @@ if __name__ == '__main__':
             case _:  # Default case
                 out_file = descarga_pronostico(fecha_d, args.variable, tipo, conj, modelo, out_folder, args.redownload)
 
+    except requests.exceptions.ConnectTimeout:
+        logging.error('No se pudo conectar con el servidor. Compruebe el estado de su red o del servidor.')
+        # Finalizar el script borrando PID
+        script.end_script_execution()
+        # Detener ejecución del script
+        sys.exit(0)
+
+    except requests.exceptions.ReadTimeout:
+        logging.error('Conectado, pero el servidor tardó demasiado en enviar los datos.')
+        # Finalizar el script borrando PID
+        script.end_script_execution()
+        # Detener ejecución del script
+        sys.exit(0)
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Se produjo un error inesperado: {str(e)}")
+        # Detener ejecución del script
+        sys.exit(1)
+
     except FcstNotYetPublished as e:
         logging.error(f'{str(e)}')
         # Finalizar el script borrando PID
         script.end_script_execution()
         # Detener ejecución del script
         sys.exit(0)
+
+    except FcstNotFound as e:
+        logging.error(f'{str(e)}')
+        # Detener ejecución del script
+        sys.exit(1)
 
 
 

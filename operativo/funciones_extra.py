@@ -104,7 +104,6 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
     else:
         logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
         if validators.url(url_out):
-            logging.info(f'######## - Guardando archivo en: {out_file}')
             firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
             with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
                 if '<title>Error 404 Not Found</title>' in r.text:
@@ -114,6 +113,7 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
                         raise FcstNotYetPublished(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
                     else:
                         raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+                logging.info(f'######## - Guardando archivo en: {out_file}')
                 with open(out_file, 'wb') as file_obj:
                     for chunk in r.iter_content(chunk_size=8192):
                         file_obj.write(chunk)
@@ -135,9 +135,16 @@ def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder, r
         else:
             logging.info(f'######## Descargando archivo {modelo} para la fecha: {fechai}')
             if validators.url(url_out):
-                logging.info(f'######## - Guardando archivo en: {out_file}')
                 firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
                 with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
+                    if '<title>Error 404 Not Found</title>' in r.text:
+                        config = GlobalConfig.Instance().app_config
+                        diff_dates = abs(dt.date.today() - fecha.date())
+                        if diff_dates.days < config.dias_tolerancia_pub:
+                            raise FcstNotYetPublished(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+                        else:
+                            raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+                    logging.info(f'######## - Guardando archivo en: {out_file}')
                     with open(out_file, 'wb') as file_obj:
                         shutil.copyfileobj(r.raw, file_obj)
             else:
