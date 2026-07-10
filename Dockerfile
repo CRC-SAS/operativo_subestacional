@@ -8,7 +8,7 @@
 ARG PYTHON_VERSION="3.14"
 
 # Set image variant
-ARG IMG_VARIANT="-slim"
+ARG IMG_VARIANT=""
 
 # Set APP installation folder
 ARG APP_HOME="/opt/pronos/operativo"
