@@ -105,7 +105,8 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
         logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
         if validators.url(url_out):
             logging.info(f'######## - Guardando archivo en: {out_file}')
-            with requests.get(url_out, stream=True) as r:
+            firefox = 'Mozilla/5.0 (X11; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0'
+            with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
                 if '<title>Error 404 Not Found</title>' in r.text:
                     config = GlobalConfig.Instance().app_config
                     diff_dates = abs(dt.date.today() - fecha.date())
