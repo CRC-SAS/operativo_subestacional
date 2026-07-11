@@ -1,8 +1,9 @@
 
 import os
+import time
 import glob
-import requests
 import shutil
+import requests
 import validators
 import numpy as np
 import pandas as pd
@@ -21,8 +22,10 @@ from calendar import Day
 
 from setup.config import GlobalConfig
 from errors.forecasts import FcstNotFound, FcstNotYetPublished
+from errors.forecasts import FcstFileIsEmpty, FcstInvalidURL
 
 
+NUM_RETRIES = 3
 VALID_DATE_FORMATS = ['%Y%m%d', '%Y-%m-%d', '%Y/%m/%d']
 
 
@@ -97,16 +100,32 @@ def gen_url_download(fecha, variable='tas', tipo='forecast', conj='ECCC', modelo
 
 
 def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownload: bool = False):
-    url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
+
     out_file = out_folder + variable + '_' + modelo + '_' + fecha.strftime('%Y%m%d%H%M') + '_forecast.nc'
+
     if os.path.isfile(out_file) and not redownload:
-        logging.info(f'######## El archivo {modelo} para la fecha: {fecha} ya esta descargado y disponible')
-    else:
-        logging.info(f'######## Descargando archivo {modelo} para la fecha: {fecha}')
-        logging.info(f'######## - URL: {url_out}')
-        if validators.url(url_out):
-            firefox = 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0'
-            with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
+        logging.info(f'######## El archivo {conj}-{modelo} para la fecha: {fecha} ya esta descargado y disponible')
+        return out_file
+
+    logging.info(f'######## Descargando archivo {conj}-{modelo} para la fecha: {fecha}')
+
+    url_out = gen_url_download(fecha, variable, tipo, conj, modelo)
+    logging.info(f'######## - URL: {url_out}')
+
+    if not validators.url(url_out):
+        logging.error('######## - URL inválida!!')
+        raise FcstInvalidURL
+
+    firefox = 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0'
+    requests_params = dict(headers={'User-Agent': firefox}, timeout=(300, 300), stream=True)
+
+    for i in range(NUM_RETRIES+1):
+
+        try:
+
+            with requests.get(url_out, **requests_params) as r:
+
+                # Check if file was found or not
                 if '<title>Error 404 Not Found</title>' in r.text:
                     config = GlobalConfig.Instance().app_config
                     diff_dates = abs(dt.date.today() - fecha.date())
@@ -114,47 +133,42 @@ def descarga_pronostico(fecha, variable, tipo, conj, modelo, out_folder, redownl
                         raise FcstNotYetPublished(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
                     else:
                         raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+
+                # Save downloaded file
                 logging.info(f'######## - Guardando archivo en: {out_file}')
                 with open(out_file, 'wb') as file_obj:
                     for chunk in r.iter_content(chunk_size=8192):
-                        file_obj.write(chunk)
-        else:
-            logging.error('######## - URL inválida!!')
-    logging.info('#####################################################')
-    
+                        if chunk:
+                            file_obj.write(chunk)
+
+                # Verify downloaded file
+                if os.path.exists(out_file) and os.path.getsize(out_file) == 0:
+                    logging.error(f'######## - Archivo vacío: {out_file}')
+                    raise FcstFileIsEmpty(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
+
+                # Stop for cycle
+                break
+
+        except FcstNotYetPublished, FcstNotFound:
+            raise
+
+        except Exception:
+            if i > 0:
+                logging.info(f'######## - Retry: {i} de {NUM_RETRIES}')
+                time.sleep(3)
+            if i >= NUM_RETRIES:
+                raise
+
     return out_file
 
 
 def descarga_pronostico_CFSv2(fecha, variable, tipo, conj, modelo, out_folder, redownload: bool = False):
 
     for fechai in [fecha-dt.timedelta(days=int(i)) for i in np.arange(0,5)]:
-        url_out = gen_url_download(fechai, variable, tipo, conj, modelo)
-        out_file = out_folder + variable + '_' + modelo + '_' + fechai.strftime('%Y%m%d%H%M') + '_forecast.nc'
-        if os.path.isfile(out_file) and not redownload:
-            logging.info(f'######## El archivo {modelo} para la fecha: {fechai} ya esta descargado y disponible')
-            continue
-        else:
-            logging.info(f'######## Descargando archivo {modelo} para la fecha: {fechai}')
-            logging.info(f'######## - URL: {url_out}')
-            if validators.url(url_out):
-                firefox = 'Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0'
-                with requests.get(url_out, headers={'User-Agent': firefox}, stream=True) as r:
-                    if '<title>Error 404 Not Found</title>' in r.text:
-                        config = GlobalConfig.Instance().app_config
-                        diff_dates = abs(dt.date.today() - fecha.date())
-                        if diff_dates.days < config.dias_tolerancia_pub:
-                            raise FcstNotYetPublished(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
-                        else:
-                            raise FcstNotFound(f'{conj}-{modelo}', fecha.strftime('%Y-%m-%d'))
-                    logging.info(f'######## - Guardando archivo en: {out_file}')
-                    with open(out_file, 'wb') as file_obj:
-                        shutil.copyfileobj(r.raw, file_obj)
-            else:
-                logging.error('######## - URL inválida!!')
-    logging.info('#####################################################')
+        descarga_pronostico(fechai, variable, tipo, conj, modelo, out_folder, redownload)
 
     out_files = sorted(glob.glob(out_folder + '*' + modelo + '*.nc'), reverse=True)
-    
+
     return out_files
 
 
