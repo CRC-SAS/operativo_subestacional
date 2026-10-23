@@ -15,7 +15,9 @@ services:
     restart: unless-stopped
 
   pronos:
+    container_name: pronos-subestacionales
     image: pronos-subestacionales:latest
+    pull_policy: build
     build:
       context: ..
       dockerfile: Dockerfile.nonroot
